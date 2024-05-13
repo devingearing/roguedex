@@ -12,6 +12,7 @@ s.onload = function () {
  
 // receive message from injected script
 window.addEventListener('message', function (e) {
+    ///GET_SAVEDATA and UPDATE_SAVEDATA will only be used upon load, then everything will fall to UPDATE_ALL
     if (e.data.type === 'GET_SAVEDATA') {
         browserApi.runtime.sendMessage({ type: 'GET_SAVEDATA', data: e.data.data }, function(response) {
           if (response && response.success) {
@@ -19,6 +20,20 @@ window.addEventListener('message', function (e) {
           } else {
             console.error('Failed to update game info');
           }
+        });
+    }
+    if(e.data.type === 'GET_SAVEDATA_2') {
+        browserApi.runtime.sendMessage({type: 'GET_SAVEDATA_2', data: e.data.data}, function (response) {
+            localStorage.setItem('updateSaveData', JSON.stringify(e.data.data));
+        });
+    }
+    if (e.data.type === 'GET_SAVEDATA') {
+        browserApi.runtime.sendMessage({ type: 'GET_ALL', data: (e.data.data)["session"]}, function(response) {
+            if (response && response.success) {
+                console.log('Successfully updated game info');
+            } else {
+                console.error('Failed to update game info');
+            }
         });
     }
 });

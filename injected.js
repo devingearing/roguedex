@@ -26,16 +26,34 @@
 
 const { fetch: origFetch } = window;
 window.fetch = async (...args) => {
+    args[1] = { ...args[1], mode: 'cors' };
     const response = await origFetch(...args);
-    //console.log('injected script fetch request:', args);
-    if (!response.url.includes('api.pokerogue.net/savedata/get?datatype=1')) return response
-    response
-        .clone()
-        .json() // maybe json(), text(), blob()
-        .then(data => {
-            window.postMessage({ type: 'GET_SAVEDATA', data: data }, '*'); // send to content script
-            //window.postMessage({ type: 'fetch', data: URL.createObjectURL(data) }, '*'); // if a big media file, can createObjectURL before send to content script
-        })
-        .catch(err => console.error(err));
+    const url = response.url;
+    const request = args[1];
+    if (url.includes('api.pokerogue.net/savedata/get?datatype=1')) {
+        response
+            .clone()
+            .json()
+            .then(data => {
+                window.postMessage({type: 'GET_SAVEDATA', data: data}, '*');
+            })
+            .catch(err => console.error(err));
+    }
+    else if (url.includes('api.pokerogue.net/savedata/updateall')) {
+        window.postMessage({type: 'UPDATE_ALL', data: JSON.parse(request.body)}, '*');
+    }
+    else if(url.includes('api.pokerogue.net/savedata/get?datatype=0')) {
+        response
+            .clone()
+            .json()
+            .then(data => {
+                window.postMessage({ type: 'GET_SAVEDATA_2', data: data }, '*');
+            })
+            .catch(err => console.error(err));
+    }
+    else {
+        return response;
+    }
+
     return response;
 };

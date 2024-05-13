@@ -1,17 +1,34 @@
 .allies-team {
   margin: 0 auto;
-  padding: 20px;
+  padding: 1em;
   position: absolute;
-  max-height: 165px;
+  max-height: 10em;
   bottom: 0;
   right: 0;
   z-index: 1;
   display: flex;
 }
 
+.stat-p {
+  display: flex;
+  padding-right: 0.3em;
+  padding-top: 0.3em;
+}
+
+.stat-c {
+  position: relative;
+  text-shadow: 0.1em 0 rgba(255, 255, 255, 0), -0.1em 0 rgba(255, 255, 255, 0), 0 0.1em rgba(255, 255, 255, 0), 0 -0.1em rgba(255, 255, 255, 0), 0.05em 0.05em rgba(255, 255, 255, 0), -0.05em -0.05em rgba(255, 255, 255, 0), 0.05em -0.05em rgba(255, 255, 255, 0), -0.05em 0.05em rgba(255, 255, 255, 0);
+}
+
+.stat-icon {
+  position: absolute;
+  top: -0.3em;
+  right: -0.5em;
+}
+
 .enemy-team {
   margin: 0 auto;
-  padding: 20px;
+  padding: 1em;
   position: absolute;
   top: 0;
   z-index: 1;
@@ -29,13 +46,13 @@
   border: 2px solid #555;
   border-radius: 8px;
   flex: 0 0 auto;
-  display:flex;
+  display: flex;
   flex-direction: column;
 }
 
 .pokemon-icon img {
-  width: 80px;
-  height: 80px;
+  width: 5em;
+  height: 5em;
 }
 
 .pokemon-info {
@@ -49,22 +66,22 @@
 }
 
 .type-icon {
-  width: 30px;
-  height: 30px;
+  width: 1.5em;
+  height: 1.5em;
   background-size: cover;
   background-repeat: no-repeat;
   background-position: left;
-  background-position-x: -1.15px;
+  background-position-x: -0.07em;
   border-radius: 50%;
-  margin: 0 5px;
+  margin: 0 0.3em;
 }
 
 .pokemon-weaknesses,
 .pokemon-resistances,
 .pokemon-immunities {
-  min-width: 45px;
+  min-width: 2.5em;
   display: flex;
-  min-height: 90px;
+  min-height: 5em;
 }
 
 .pokemon-weaknesses {
@@ -94,16 +111,21 @@
 .text-base {
   display: flex;
   font-family: 'emerald';
-  font-size: 20px;
-  text-shadow: 2px 0 #fff, -2px 0 #fff, 0 2px #fff, 0 -2px #fff, 1px 1px #fff, -1px -1px #fff, 1px -1px #fff, -1px 1px #fff;
+  font-size: 1em;
+  text-shadow: 0.1em 0 #fff, -0.1em 0 #fff, 0 0.1em #fff, 0 -0.1em #fff, 0.05em 0.05em #fff, -0.05em -0.05em #fff, 0.05em -0.05em #fff, -0.05em 0.05em #fff;
   color: black;
 }
 
 .arrow-button-wrapper {
   display: grid;
 }
+
 .arrow-button {
-  font-size: 50px;
+  font-size: 2.5em;
+}
+
+.arrow-button-sm {
+  font-size: 1.15em;
 }
 
 .tooltip .tooltiptext {
@@ -111,12 +133,12 @@
   font-family: 'emerald';
   text-align: center;
   border-radius: 6px;
-  padding: 5px 0;
-  font-size: 20px;
+  padding: 0.25em 0;
+  font-size: 1em;
   position: absolute;
   z-index: 1;
   color: black;
-  text-shadow: 2px 0 #fff, -2px 0 #fff, 0 2px #fff, 0 -2px #fff, 1px 1px #fff, -1px -1px #fff, 1px -1px #fff, -1px 1px #fff;
+  text-shadow: 0.1em 0 #fff, -0.1em 0 #fff, 0 0.1em #fff, 0 -0.1em #fff, 0.05em 0.05em #fff, -0.05em -0.05em #fff, 0.05em -0.05em #fff, -0.05em 0.05em #fff;
 }
 
 .tooltip:hover .tooltiptext {
@@ -124,38 +146,40 @@
 }
 
 /* Slider settings */
-@media screen and (-webkit-min-device-pixel-ratio:0) {
-    input[type='range'] {
-      overflow: hidden;
-      width: 80px;
-      -webkit-appearance: none;
-    }
-    
-    input[type='range']::-webkit-slider-runnable-track {
-      height: 10px;
-      -webkit-appearance: none;
-      color: #13bba4;
-      margin-top: -1px;
-    }
-    
-    input[type='range']::-webkit-slider-thumb {
-      width: 10px;
-      -webkit-appearance: none;
-      height: 10px;
-      cursor: ew-resize;
-      box-shadow: -80px 0 0 80px #b3462c;
-    }
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  input[type='range'] {
+    overflow: hidden;
+    width: 4em;
+    -webkit-appearance: none;
+  }
 
+  input[type='range']::-webkit-slider-runnable-track {
+    height: 10px;
+    -webkit-appearance: none;
+    color: #13bba4;
+    margin-top: -1px;
+  }
+
+  input[type='range']::-webkit-slider-thumb {
+    width: 10px;
+    -webkit-appearance: none;
+    height: 10px;
+    cursor: ew-resize;
+    box-shadow: -80px 0 0 80px #b3462c;
+  }
 }
-/** FF*/
+
+/* FF */
 input[type="range"]::-moz-range-progress {
   background-color: #b3462c;
 }
-input[type="range"]::-moz-range-track {  
+
+input[type="range"]::-moz-range-track {
   background-color: #fff;
 }
+
 input[type="range"] {
-  background-color:transparent
+  background-color: transparent;
 }
 
 .slider-wrapper {

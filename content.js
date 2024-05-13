@@ -160,15 +160,21 @@ let enemiesPokemon = [];
 let alliesPokemon = [];
 let weather = {};
 
-function createArrowButtonsDiv(divId) {
+function createArrowButtonsDiv(divId, isMin) {
 	const buttonsDiv = document.createElement('div')
 	buttonsDiv.classList.add('arrow-button-wrapper')
 	const arrowUpButton = document.createElement('button')
 	const arrowDownButton = document.createElement('button')
 	arrowUpButton.classList.add('text-base')
 	arrowDownButton.classList.add('text-base')
-	arrowUpButton.classList.add('arrow-button')
-	arrowDownButton.classList.add('arrow-button')
+	if(isMin) {
+		arrowUpButton.classList.add('arrow-button-sm')
+		arrowDownButton.classList.add('arrow-button-sm')
+	}
+	else{
+		arrowUpButton.classList.add('arrow-button')
+		arrowDownButton.classList.add('arrow-button')
+	}
 	arrowUpButton.textContent = "↑"
 	arrowDownButton.textContent = "↓"
 	arrowUpButton.id = `${divId}-up`
@@ -205,7 +211,7 @@ function changeOpacity(e) {
 	div.style.opacity = `${e.target.value / 100}`
 }
 
-function changePage(click) {
+async function changePage(click) {
 	const buttonId = click.target.id
 	const divId = buttonId.split("-")[0]
 	const direction = buttonId.split("-")[1]
@@ -238,10 +244,34 @@ function changePage(click) {
 			}
 		}
 	}
-	createCardsDiv(divId)
+	await createCardsDiv(divId).then(()=>{
+		scaleElements();
+	})
 }
 
-function createPokemonCardDiv(divId, pokemon) {
+async function createPokemonCardDiv(divId, pokemon) {
+	const data = await browserApi.storage.sync.get('showMinified');
+	const isMinified = data.showMinified;
+	console.log(isMinified);
+	let returnObj;
+	if (isMinified) {
+		returnObj = createPokemonCardDivMinifed(divId, pokemon);
+	} else {
+		returnObj = createCardsMain(divId, pokemon);
+	}
+	return returnObj;
+}
+
+
+function createPokemonCardDivMinifed(divId, pokemon) {
+
+	let savedData = JSON.parse(localStorage.getItem('updateSaveData'));
+	console.log(savedData);
+	let dexData = savedData["dexData"];
+	let dexIvs = dexData[pokemon.baseId]["ivs"];
+	console.log(pokemon.ivs);
+	console.log(dexIvs);
+
 	const card = document.createElement('div');
 	card.classList.add('pokemon-card');
 
@@ -251,13 +281,78 @@ function createPokemonCardDiv(divId, pokemon) {
 	infoRow.style.display = 'flex';
 
 	const iconWrapper = document.createElement('div');
-  iconWrapper.className = 'pokemon-icon';
-  const icon = document.createElement('img');
-  icon.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
-  iconWrapper.appendChild(icon);
-  infoRow.appendChild(iconWrapper);
+	iconWrapper.className = 'pokemon-icon';
+	const icon = document.createElement('img');
+	console.log(pokemon);
+	icon.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
+	iconWrapper.appendChild(icon);
+	infoRow.appendChild(iconWrapper);
 
-  const weaknessesWrapper = createTypeEffectivenessWrapper('weaknesses', pokemon.typeEffectiveness.weaknesses)
+	const weaknessesWrapper = createTypeEffectivenessWrapper('weaknesses', pokemon.typeEffectiveness.weaknesses)
+	weaknessesWrapper.appendChild(createTooltipDiv('Weak to'))
+
+	const resistancesWrapper = createTypeEffectivenessWrapper('resistances', pokemon.typeEffectiveness.resistances)
+	resistancesWrapper.appendChild(createTooltipDiv('Resists'))
+
+	const immunitiesWrapper = createTypeEffectivenessWrapper('immunities', pokemon.typeEffectiveness.immunities)
+	immunitiesWrapper.appendChild(createTooltipDiv('Immune to'))
+
+	infoRow.appendChild(weaknessesWrapper)
+	infoRow.appendChild(resistancesWrapper)
+	infoRow.appendChild(immunitiesWrapper)
+
+	const pokemonName = document.createElement('div');
+	pokemonName.classList.add('text-base');
+	pokemonName.textContent = `Name: ${pokemon.name}`;
+
+	const extraInfoRow = document.createElement('div');
+	extraInfoRow.classList.add('text-base')
+	extraInfoRow.textContent = `Ability: ${pokemon.ability} - Nature: ${pokemon.nature}`;
+
+	const ivsRow = document.createElement('div');
+	ivsRow.classList.add('text-base');
+	for (let i in pokemon.ivs) {
+		let curIV = pokemon.ivs[i];
+		let statDiv = document.createElement('div');
+		statDiv.className = 'stat-p';
+		statDiv.innerHTML = `${Stat[i]}:&nbsp;<div class="stat-c" style="color: ${getColor(curIV)}">${curIV}${ivComparison(curIV, dexIvs[i])}</div>&nbsp;&nbsp;`;
+		ivsRow.appendChild(statDiv);
+	}
+
+	let weatherRow = undefined
+	if (weather.type && weather.turnsLeft) {
+		weatherRow = document.createElement('div');
+		weatherRow.classList.add('text-base');
+		weatherRow.textContent = `Weather: ${weather.type}, Turns Left: ${weather.turnsLeft}`
+	}
+
+	card.appendChild(pokemonName);
+	card.appendChild(extraInfoRow)
+	card.appendChild(ivsRow)
+	if (weatherRow) {
+		card.appendChild(weatherRow)
+	}
+	return card
+}
+
+function createCardsMain(divId, pokemon){
+	console.log(pokemon);
+	const card = document.createElement('div');
+	card.classList.add('pokemon-card');
+
+	const opacitySliderDiv = createOpacitySliderDiv(divId)
+
+	const infoRow = document.createElement('div');
+	infoRow.style.display = 'flex';
+
+	const iconWrapper = document.createElement('div');
+	iconWrapper.className = 'pokemon-icon';
+	const icon = document.createElement('img');
+	icon.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
+	iconWrapper.appendChild(icon);
+	infoRow.appendChild(iconWrapper);
+
+	const weaknessesWrapper = createTypeEffectivenessWrapper('weaknesses', pokemon.typeEffectiveness.weaknesses)
 	weaknessesWrapper.appendChild(createTooltipDiv('Weak to'))
 
 	const resistancesWrapper = createTypeEffectivenessWrapper('resistances', pokemon.typeEffectiveness.resistances)
@@ -273,11 +368,11 @@ function createPokemonCardDiv(divId, pokemon) {
 	const extraInfoRow = document.createElement('div');
 	extraInfoRow.classList.add('text-base')
 	extraInfoRow.textContent = `Ability: ${pokemon.ability} - Nature: ${pokemon.nature}`;
-	
+
 	const ivsRow = document.createElement('div');
 	ivsRow.classList.add('text-base');
 	ivsRow.textContent = `HP: ${pokemon.ivs[Stat["HP"]]}, ATK: ${pokemon.ivs[Stat["ATK"]]}, DEF: ${pokemon.ivs[Stat["DEF"]]}, SPE: ${pokemon.ivs[Stat["SPD"]]}, SPD: ${pokemon.ivs[Stat["SPDEF"]]}, SPA: ${pokemon.ivs[Stat["SPATK"]]}`;
-	
+
 	let weatherRow = undefined
 	if (weather.type && weather.turnsLeft) {
 		weatherRow = document.createElement('div');
@@ -293,6 +388,46 @@ function createPokemonCardDiv(divId, pokemon) {
 		card.appendChild(weatherRow)
 	}
 	return card
+}
+
+function ivComparison(pokeIv, dexIv) {
+	let iconA = "";
+	let colorS = "#00FF00";
+	if(pokeIv > dexIv){
+		iconA = "↑";
+		colorS = "#00FF00";
+	}
+	else if (pokeIv < dexIv) {
+		iconA = "↓";
+		colorS = "#FF0000";
+	}
+	else{
+		iconA = "-";
+		colorS = "#FFFF00";
+	}
+	let returnHTML = `<div class="stat-icon" style="color: ${colorS} !important; opacity: 0.3">${iconA}</div>`
+	return returnHTML;
+}
+
+function getColor(num) {
+	if (num < 0 || num > 31) {
+		throw new Error('Number must be between 0 and 31');
+	}
+
+	// Calculate the red component: It decreases as 'num' increases
+	let red = Math.floor(255 * (1 - num / 31));
+	// Calculate the green component: It increases as 'num' increases
+	let green = Math.floor(255 * (num / 31));
+	// Blue component is always 0 for a red to green gradient
+	let blue = 0;
+
+	// Convert each color component to a hex string and pad with 0 if necessary
+	let redHex = red.toString(16).padStart(2, '0');
+	let greenHex = green.toString(16).padStart(2, '0');
+	let blueHex = blue.toString(16).padStart(2, '0');
+
+	// Combine the hex values and return the result
+	return `#${redHex}${greenHex}${blueHex}`;
 }
 
 function createWrapperDiv(divId) {
@@ -315,9 +450,11 @@ function createWrapperDiv(divId) {
 	return newDiv;
 }
 
-function createCardsDiv(divId) {
+async function createCardsDiv(divId) {
 	let newDiv = createWrapperDiv(divId)
-	let buttonsDiv = createArrowButtonsDiv(divId)
+
+	//fix how this works
+	let buttonsDiv = createArrowButtonsDiv(divId, true)
   newDiv.appendChild(buttonsDiv)
   let pokemon = {}
   if (divId === 'enemies') {
@@ -330,7 +467,8 @@ function createCardsDiv(divId) {
   }
   const pokemonCards = document.createElement("div");
   pokemonCards.className = "pokemon-cards"
-	const card = createPokemonCardDiv(divId, pokemon)
+
+	const card = await createPokemonCardDiv(divId, pokemon)
 	pokemonCards.appendChild(card);
 	newDiv.appendChild(pokemonCards)
 	document.body.appendChild(newDiv)
@@ -338,7 +476,30 @@ function createCardsDiv(divId) {
 	return newDiv
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+async function scaleElements() {
+
+	const data = await browserApi.storage.sync.get('scaleFactor');
+	//console.log(data);
+	const scaleFactorMulti = data.scaleFactor || 1;
+	const baseWidth = 1920; // Assume a base width of 1920 pixels
+	const baseHeight = 1080; // Assume a base height of 1080 pixels
+	const currentWidth = window.innerWidth;
+	const currentHeight = window.innerHeight;
+	const scaleFactor_width = currentWidth / baseWidth;
+	const scaleFactor_height = currentHeight / baseHeight;
+	let scaleFactor = scaleFactor_width < scaleFactor_height ? scaleFactor_width : scaleFactor_height;
+
+	const enemiesDiv = document.getElementById('enemies');
+	const alliesDiv = document.getElementById('allies');
+
+	enemiesDiv.style.fontSize = `${16 * scaleFactor * scaleFactorMulti}px`;
+	alliesDiv.style.fontSize = `${16 * scaleFactor * scaleFactorMulti}px`;
+}
+
+// Call scaleElements initially and on window resize
+window.addEventListener('resize', scaleElements);
+
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 	console.log("Got message:", message, "from", sender)
 	if (message.type === 'UPDATE_ENEMIES_DIV' || message.type === 'UPDATE_ALLIES_DIV') {
 		let divId = message.type === 'UPDATE_ENEMIES_DIV' ? 'enemies' : 'allies'
@@ -350,7 +511,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		}
 		weather = message.weather;
 		if (weather.turnsLeft === 0) weather.turnsLeft = 'N/A'
-		createCardsDiv(divId)
+		await createCardsDiv(divId).then(()=>{
+			scaleElements();
+		})
     sendResponse({ success: true });
 	}
 });

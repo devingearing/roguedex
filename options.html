@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rogue Dex Options</title>
+    <link rel="stylesheet" type="text/css" href="options.css">
+</head>
+<body>
+<div id="input-container">
+    <div id="display-settings-container" class="main-settings-block">
+        <div class="settings-title">
+            Display Settings
+        </div>
+        <div class="settings-content">
+            <div class="input-item">
+                <label>
+                    <input type="checkbox" id="show-minified"/>
+                    Use Minified
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div id="additional-settings-container" class="main-settings-block">
+        <div class="settings-title">
+            Additional Settings
+        </div>
+        <div class="settings-content">
+            <div class="input-item">
+                <label>
+                    <input type="checkbox" id="show-enemies"/>
+                    Show Enemies
+                </label>
+            </div>
+            <div class="input-item">
+                <label>
+                    <input type="checkbox" id="show-party"/>
+                    Show Party
+                </label>
+            </div>
+            <div class="input-item">
+                <p>Overlay Scale</p>
+                <input type="range" id="scaleSlider" min="0.25" max="5" value="1" step="0.25">
+                <span id="scaleValue">1</span>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="status"></div>
+<button id="save">Save</button>
+
+
+<script src="options.js"></script>
+</body>
+</html>
