@@ -251,7 +251,7 @@ async function changePage(click) {
 
 async function createPokemonCardDiv(divId, pokemon) {
 	const data = await browserApi.storage.sync.get('showMinified');
-	const isMinified = data.showMinified;
+	const isMinified = (data.hasOwnProperty('showMinified') ? data.showMinified : false);
 	console.log(isMinified);
 	let returnObj;
 	if (isMinified) {
