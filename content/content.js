@@ -447,7 +447,6 @@ function listenForDataUiModeChange() {
 					console.log('New value:', newValue);
 					if(newValue === 'CONFIRM'){
 						let sessionData = Utils.LocalStorage.getSessionData();
-						console.log(sessionData);
 						await Utils.PokeMapper.getPokemonArray(sessionData.enemyParty, sessionData.arena).then(async (ePokemonData) =>{
 							enemiesPokemon = ePokemonData.pokemon;
 							weather = ePokemonData.hasOwnProperty('weather') ? ePokemonData.weather : null;
@@ -455,16 +454,13 @@ function listenForDataUiModeChange() {
 								scaleElements();
 							});
 						});
-						//enemiesPokemon = enemyPokemonData.pokemon;
-						// let alliesPokemonData = await Utils.PokeMapper.getPokemonArray(sessionData.party, sessionData.arena);
-						// alliesPokemon = alliesPokemonData.pokemon;
-						//weather = message.weather;
-						await createCardsDiv("enemies").then(()=>{
-							scaleElements();
+						await Utils.PokeMapper.getPokemonArray(sessionData.party, sessionData.arena).then(async (ePokemonData) =>{
+							alliesPokemon = ePokemonData.pokemon;
+							weather = ePokemonData.hasOwnProperty('weather') ? ePokemonData.weather : null;
+							await createCardsDiv("allies").then(()=>{
+								scaleElements();
+							});
 						});
-						// await createCardsDiv("allies").then(()=>{
-						// 	scaleElements();
-						// });
 					}
 					//CONFIRM -- this is when game starts
 					//MODIFIER_SELECT -- this is in store
@@ -591,15 +587,7 @@ async function createCardsDiv(divId) {
 }
 
 async function scaleElements() {
-	let testPokemonBase = Utils.PokeMapper.findBasePokemon("CHARIZARD");
-	console.log(testPokemonBase);
-
-	console.log(Utils.LocalStorage.getSessionData())
-	//const localStorageData = localStorage.getItem("sessionData");
-	//console.log(localStorageData);
-	//readLocalStorage("sessionData");
 	const data = await browserApi.storage.sync.get('scaleFactor');
-	//console.log(data);
 	const scaleFactorMulti = data.scaleFactor || 1;
 	const baseWidth = 1920; // Assume a base width of 1920 pixels
 	const baseHeight = 1080; // Assume a base height of 1080 pixels
