@@ -42,27 +42,6 @@ window.addEventListener('message', function (e) {
             // });
         });
     }
-    // if (e.data.type === 'GET_SAVEDATA') {
-    //     browserApi.runtime.sendMessage({ type: 'GET_ALL', data: (e.data.data)["session"]}, function(response) {
-    //         if (response && response.success) {
-    //             console.log('Successfully updated game info');
-    //         } else {
-    //             console.error('Failed to update game info');
-    //         }
-    //     });
-    // }
-    // if(e.data.type === "INJ_READ_LOCAL_STORAGE") {
-    //     console.log("INJ_READ_LOCAL_STORAGE triggered");
-    //     console.log(e.data);
-    //     return JSON.stringify({message: "test"});
-    //     //localStorage.getItem("e.data.data");
-    //     // browserApi.runtime.sendMessage({
-    //     //     type: "BCK_READ_LOCAL_STORAGE",
-    //     //     data: localStorage.getItem('e.data.data')
-    //     // }, function (response) {
-    //     //     console.log(response);
-    //     // });
-    // }
 
     if (e.data.type === "INJ_READ_LOCAL_STORAGE") {
         const localStorageData = localStorage.getItem(e.data.data);
