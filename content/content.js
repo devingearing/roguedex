@@ -1,3 +1,5 @@
+import Utils from "./utils.js";
+
 // Creates the main wrapper div
 function createDiv() {
   const mainWrapper = document.createElement("div");
@@ -262,15 +264,59 @@ async function createPokemonCardDiv(divId, pokemon) {
 	return returnObj;
 }
 
+async function readLocalStorage(key) {
+	key = "sessionData";
+	// Send a message to the injected script via window.postMessage
+	window.postMessage({ type: "INJ_READ_LOCAL_STORAGE", data: key }, "*");
+
+	// Listen for the response from the injected script
+	window.addEventListener("message", (event) => {
+		if (event.data.type === "INJ_READ_LOCAL_STORAGE_RESPONSE") {
+			console.log("Received response from injected script:");
+			console.log(event.data.response);
+		}
+	});
+}
+
+// function test(){
+// 	browserApi.storage.local.get("sessionData", function(result) {
+// 		console.log(result);
+// 		if (result.data) {
+// 			var gameData = result.data;
+// 			console.log(gameData)
+// 			// Process the game data and create the overlay
+// 			//createOverlay(gameData);
+// 		} else {
+// 			console.log("Game data not found in Local Storage.");
+// 		}
+// 	});
+//
+// 	browserApi.storage.local.get("updateSaveData", function(result) {
+// 		console.log(result);
+// 		if (result.data) {
+// 			var gameData = result.data;
+// 			console.log(gameData)
+// 			// Process the game data and create the overlay
+// 			//createOverlay(gameData);
+// 		} else {
+// 			console.log("Dex data not found in Local Storage.");
+// 		}
+// 	});
+// }
+
+
+
+
 
 function createPokemonCardDivMinifed(divId, pokemon) {
 
 	let savedData = JSON.parse(localStorage.getItem('updateSaveData'));
-	console.log(savedData);
+
+	//console.log(savedData);
 	let dexData = savedData["dexData"];
 	let dexIvs = dexData[pokemon.baseId]["ivs"];
-	console.log(pokemon.ivs);
-	console.log(dexIvs);
+	//console.log(pokemon.ivs);
+	//console.log(dexIvs);
 
 	const card = document.createElement('div');
 	card.classList.add('pokemon-card');
@@ -477,7 +523,11 @@ async function createCardsDiv(divId) {
 }
 
 async function scaleElements() {
-
+	let testPokemonBase = Utils.PokeMapper.findBasePokemon("CHARIZARD");
+	console.log(testPokemonBase);
+	//const localStorageData = localStorage.getItem("sessionData");
+	//console.log(localStorageData);
+	//readLocalStorage("sessionData");
 	const data = await browserApi.storage.sync.get('scaleFactor');
 	//console.log(data);
 	const scaleFactorMulti = data.scaleFactor || 1;

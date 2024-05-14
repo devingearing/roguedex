@@ -1,5 +1,5 @@
 const browserApi = typeof browser !== "undefined" ? browser : chrome;
-
+importScripts('libs/crypto-js.min.js');
 const Species = {
     BULBASAUR: 1,
     IVYSAUR: 2,
@@ -2061,6 +2061,8 @@ for (const [key, value] of Object.entries(Species)) {
     SpeciesNumberToName[value] = key;
 }
 
+
+
 function convertPokemonId(pokemonId) {
   const conversionList = {
     2019: 10091,
@@ -2132,9 +2134,60 @@ function mapPartyToPokemonArray(party) {
   return party.map(({ species, abilityIndex, nature, ivs }) => ({ species, abilityIndex, nature, ivs }))
 }
 
+// function test(){
+// console.log("Test Function Hit");
+// browserApi.storage.sync.
+// }
+
+const saveKey = 'x0i2O7WRiANTqPmZ'; // Temporary; secure encryption is not yet necessary
+
+// function getSessionData() {
+//     // Retrieve the 'sessionData' from chrome.storage
+//     return new Promise((resolve, reject) => {
+//         browserApi.storage.local.get('sessionData', (data) => {
+//             if (data.sessionData) {
+//                 try {
+//                     let sessionData;
+//                     if (bypassLogin) {
+//                         // Decode the session data using base64
+//                         const decodedString = atob(data.sessionData);
+//                         sessionData = JSON.parse(decodedString);
+//                     } else {
+//                         // Decrypt the session data using AES
+//                         const decryptedString = AES.decrypt(data.sessionData, saveKey).toString(enc.Utf8);
+//                         sessionData = JSON.parse(decryptedString);
+//                     }
+//                     console.log(sessionData);
+//
+//                     // Resolve the promise with the parsed session data
+//                     resolve(sessionData);
+//                 } catch (error) {
+//                     console.error('Error parsing session data:', error);
+//                     reject(error);
+//                 }
+//             } else {
+//                 console.log('Session data not found in chrome.storage');
+//                 resolve(null);
+//             }
+//         });
+//     });
+// }
+// browserApi.storage.onChanged.addListener(
+//     (changes, areaName)=>{
+//         console.log(areaName);
+//         console.log(changes);
+//
+//         // getSessionData();
+//     }
+// )
+
+function onLocalDataChanged(){
+
+}
+//test();
+
 // message can be either "UPDATE_ALLIES_DIV" or "UPDATE_ENEMIES_DIV"
 async function appendPokemonArrayToDiv(pokemonArray, arena, message) {
-    // console.log("Received save data", savedata)
     browserApi.storage.sync.get(['showItems'], (showData) => {
         let showItems = showData.showItems || {};
         let showEnemies = showItems.enemies || false;
@@ -2146,12 +2199,12 @@ async function appendPokemonArrayToDiv(pokemonArray, arena, message) {
             pokemonArray.forEach((pokemon) => {
                 const pokemonId = convertPokemonId(pokemon.species)
                 let weather = {}
-                if (arena.weather && arena.weather.weatherType) {
-                    weather = {
-                        'type': WeatherType[arena.weather.weatherType],
-                        'turnsLeft': arena.weather.turnsLeft || 0
+                    if (arena.weather && arena.weather.weatherType) {
+                        weather = {
+                            'type': WeatherType[arena.weather.weatherType],
+                            'turnsLeft': arena.weather.turnsLeft || 0
+                        }
                     }
-                }
                 getPokemonTypeEffectiveness(pokemonId).then((typeEffectiveness) => {
                     console.log("Got pokemon", pokemonId, "type effectiveness", typeEffectiveness);
                     let basePokemon = findBasePokemon(SpeciesNumberToName[pokemon.species]);
@@ -2176,7 +2229,10 @@ async function appendPokemonArrayToDiv(pokemonArray, arena, message) {
     });
 }
 
+
+
 browserApi.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
+    console.log(request.extra);
   // Happens when loading a savegame or continuing an old run
   if (request.type == 'GET_SAVEDATA') {
       appendPokemonArrayToDiv(mapPartyToPokemonArray(request.data.enemyParty), request.data.arena, "UPDATE_ENEMIES_DIV")
@@ -2186,6 +2242,17 @@ browserApi.runtime.onMessage.addListener(async function(request, sender, sendRes
         console.log("*&^&**");
         console.log("Received update save data", request.data);
         console.log("*&^&**");
+    }
+    if(request.type === `GET_LOCALDATA`){
+        const decryptedString = CryptoJS.AES.decrypt(request.data, saveKey).toString(CryptoJS.enc.Utf8);
+        let sessionData = JSON.parse(decryptedString);
+        console.log("Setting from Local Data");
+        console.log(sessionData);
+        appendPokemonArrayToDiv(mapPartyToPokemonArray(sessionData.enemyParty), sessionData.arena, "UPDATE_ENEMIES_DIV")
+        appendPokemonArrayToDiv(mapPartyToPokemonArray(sessionData.party), sessionData.arena, "UPDATE_ALLIES_DIV")
+    }
+    if(request.type === "BCK_READ_LOCAL_STORAGE"){
+        console.log("BCK_READ_LOCAL_STORAGE Hit");
     }
 });
 

@@ -40,6 +40,7 @@ window.fetch = async (...args) => {
             .catch(err => console.error(err));
     }
     else if (url.includes('api.pokerogue.net/savedata/updateall')) {
+
         window.postMessage({type: 'UPDATE_ALL', data: JSON.parse(request.body)}, '*');
     }
     else if(url.includes('api.pokerogue.net/savedata/get?datatype=0')) {
@@ -47,7 +48,7 @@ window.fetch = async (...args) => {
             .clone()
             .json()
             .then(data => {
-                window.postMessage({ type: 'GET_SAVEDATA_2', data: data }, '*');
+                window.postMessage({ type: 'GET_SAVEDATA_2', data: data, extra: request }, '*');
             })
             .catch(err => console.error(err));
     }
