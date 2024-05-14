@@ -2048,6 +2048,18 @@ function updateDiv(pokemon, weather, message) {
 }
 
 
+function sendMessage(data, message) {
+    browserApi.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        browserApi.tabs.sendMessage(tabs[0].id, { type: message, data: data}, (response) => {
+            if (response && response.success) {
+                console.log('Session Data Sent Successfully');
+            } else {
+                console.error('Failed to sent Session Data');
+            }
+        });
+    });
+}
+
 function findBasePokemon(pokemonName) {
     let currentName = pokemonName;
     while (preEvolutions[currentName] !== undefined) {
@@ -2254,6 +2266,10 @@ browserApi.runtime.onMessage.addListener(async function(request, sender, sendRes
     if(request.type === "BCK_READ_LOCAL_STORAGE"){
         console.log("BCK_READ_LOCAL_STORAGE Hit");
     }
+    if(request.type === "HTTP_SESSION_DATA"){
+        console.log("BK.js HTTP_SESSION_DATA Hit");
+        sendMessage({data: request.data, type: 'HTTP_SESSION_DATA'});
+    }
 });
 
 browserApi.webRequest.onBeforeRequest.addListener(
@@ -2263,8 +2279,11 @@ browserApi.webRequest.onBeforeRequest.addListener(
                 let sessionData = JSON.parse(new TextDecoder().decode(details.requestBody.raw[0].bytes))
                 console.log("POST Session data:", sessionData)
                 if (details.url.includes("updateall")) sessionData = sessionData.session
-                appendPokemonArrayToDiv(mapPartyToPokemonArray(sessionData.enemyParty), sessionData.arena, "UPDATE_ENEMIES_DIV")
-                appendPokemonArrayToDiv(mapPartyToPokemonArray(sessionData.party), sessionData.arena, "UPDATE_ALLIES_DIV")
+
+                //window.postMessage({ type: 'HTTP_SESSION_DATA', data: JSON.parse(requestBody) }, '*');
+                sendMessage({data: JSON.parse(requestBody), type: 'HTTP_SESSION_DATA'});
+                // appendPokemonArrayToDiv(mapPartyToPokemonArray(sessionData.enemyParty), sessionData.arena, "UPDATE_ENEMIES_DIV")
+                // appendPokemonArrayToDiv(mapPartyToPokemonArray(sessionData.party), sessionData.arena, "UPDATE_ALLIES_DIV")
             } catch (e) {
                 console.error("Error while intercepting web request: ", e)
             }
@@ -2276,14 +2295,14 @@ browserApi.webRequest.onBeforeRequest.addListener(
     ["requestBody"]
 )
 
-browserApi.webRequest.onBeforeSendHeaders.addListener(
-    function(details) {
-        if (details.url.includes('api.pokerogue.net/savedata/get?datatype=0')) {
-            const requestBody = new TextDecoder("utf-8").decode(details.requestBody.raw[0].bytes);
-            window.postMessage({ type: 'GET_SAVEDATA_2', data: JSON.parse(requestBody) }, '*');
-        }
-        return { requestHeaders: details.requestHeaders };
-    },
-    { urls: ['*://api.pokerogue.net/*'] },
-    ['blocking', 'requestHeaders', 'extraHeaders']
-);
+// browserApi.webRequest.onBeforeSendHeaders.addListener(
+//     function(details) {
+//         if (details.url.includes('api.pokerogue.net/savedata/get?datatype=0')) {
+//             const requestBody = new TextDecoder("utf-8").decode(details.requestBody.raw[0].bytes);
+//             window.postMessage({ type: 'GET_SAVEDATA_2', data: JSON.parse(requestBody) }, '*');
+//         }
+//         return { requestHeaders: details.requestHeaders };
+//     },
+//     { urls: ['*://api.pokerogue.net/*'] },
+//     ['requestBody', 'requestHeaders', 'extraHeaders']
+// );

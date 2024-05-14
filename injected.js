@@ -40,7 +40,6 @@ window.fetch = async (...args) => {
             .catch(err => console.error(err));
     }
     else if (url.includes('api.pokerogue.net/savedata/updateall')) {
-
         window.postMessage({type: 'UPDATE_ALL', data: JSON.parse(request.body)}, '*');
     }
     else if(url.includes('api.pokerogue.net/savedata/get?datatype=0')) {

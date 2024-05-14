@@ -436,6 +436,70 @@ function createCardsMain(divId, pokemon){
 	return card
 }
 
+function listenForDataUiModeChange() {
+	const touchControlsElement = document.getElementById('touchControls');
+
+	if (touchControlsElement) {
+		const observer = new MutationObserver((mutations) => {
+			mutations.forEach(async (mutation) => {
+				if (mutation.type === 'attributes' && mutation.attributeName === 'data-ui-mode') {
+					const newValue = touchControlsElement.getAttribute('data-ui-mode');
+					console.log('New value:', newValue);
+					if(newValue === 'CONFIRM'){
+						let sessionData = Utils.LocalStorage.getSessionData();
+						console.log(sessionData);
+						await Utils.PokeMapper.getPokemonArray(sessionData.enemyParty, sessionData.arena).then(async (ePokemonData) =>{
+							enemiesPokemon = ePokemonData.pokemon;
+							weather = ePokemonData.hasOwnProperty('weather') ? ePokemonData.weather : null;
+							await createCardsDiv("enemies").then(()=>{
+								scaleElements();
+							});
+						});
+						//enemiesPokemon = enemyPokemonData.pokemon;
+						// let alliesPokemonData = await Utils.PokeMapper.getPokemonArray(sessionData.party, sessionData.arena);
+						// alliesPokemon = alliesPokemonData.pokemon;
+						//weather = message.weather;
+						await createCardsDiv("enemies").then(()=>{
+							scaleElements();
+						});
+						// await createCardsDiv("allies").then(()=>{
+						// 	scaleElements();
+						// });
+					}
+					//CONFIRM -- this is when game starts
+					//MODIFIER_SELECT -- this is in store
+					//PARTY -- when in party
+					//SUMMARY -- in pokemon inspect
+					//CONFIRM -- battle again
+					//COMMAND -- waiting for input
+				}
+			});
+		});
+
+		observer.observe(touchControlsElement, { attributes: true });
+	} else {
+		console.error('Element with ID "touchControls" not found.');
+	}
+}
+
+
+// let divId = message.type === 'UPDATE_ENEMIES_DIV' ? 'enemies' : 'allies'
+// if (message.type === 'UPDATE_ENEMIES_DIV') {
+// 	enemiesPokemon = message.pokemon
+// }
+// else {
+// 	alliesPokemon = message.pokemon
+// }
+// weather = message.weather;
+// if (weather.turnsLeft === 0) weather.turnsLeft = 'N/A'
+// await createCardsDiv(divId).then(()=>{
+// 	scaleElements();
+// })
+
+
+
+listenForDataUiModeChange();
+
 function ivComparison(pokeIv, dexIv) {
 	let iconA = "";
 	let colorS = "#00FF00";
@@ -503,9 +567,13 @@ async function createCardsDiv(divId) {
 	let buttonsDiv = createArrowButtonsDiv(divId, true)
   newDiv.appendChild(buttonsDiv)
   let pokemon = {}
+	//let pokemon = pokemonData.pokemon;
   if (divId === 'enemies') {
+	  console.log("Current E Page: ", currentEnemyPage);
   	if (currentEnemyPage >= enemiesPokemon.length) currentEnemyPage = enemiesPokemon.length - 1
   	pokemon = enemiesPokemon[currentEnemyPage]
+	  console.log("Current E Pokemon");
+	  console.log(pokemon);
   }
   else {
   	if (currentAllyPage >= alliesPokemon.length) currentAllyPage = alliesPokemon.length - 1
@@ -525,6 +593,8 @@ async function createCardsDiv(divId) {
 async function scaleElements() {
 	let testPokemonBase = Utils.PokeMapper.findBasePokemon("CHARIZARD");
 	console.log(testPokemonBase);
+
+	console.log(Utils.LocalStorage.getSessionData())
 	//const localStorageData = localStorage.getItem("sessionData");
 	//console.log(localStorageData);
 	//readLocalStorage("sessionData");
@@ -549,7 +619,8 @@ async function scaleElements() {
 // Call scaleElements initially and on window resize
 window.addEventListener('resize', scaleElements);
 
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+browserApi.runtime.onMessage.addListener(async (incomingMessage, sender, sendResponse) => {
+	let message = incomingMessage.data;
 	console.log("Got message:", message, "from", sender)
 	if (message.type === 'UPDATE_ENEMIES_DIV' || message.type === 'UPDATE_ALLIES_DIV') {
 		let divId = message.type === 'UPDATE_ENEMIES_DIV' ? 'enemies' : 'allies'
@@ -565,5 +636,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 			scaleElements();
 		})
     sendResponse({ success: true });
+	}
+	if(message.type === "HTTP_SESSION_DATA"){
+		console.log("GOT THE MESSAGE WE NEEDED");
+		Utils.LocalStorage.setSessionData(message.data);
+		sendResponse({ success: true });
 	}
 });
