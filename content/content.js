@@ -430,9 +430,30 @@ function createCardsMain(divId, pokemon){
 	return card
 }
 
+function extensionSettingsListener(){
+	browserApi.storage.onChanged.addListener(async function (changes, namespace) {
+		for (let [key, {oldValue, newValue}] of Object.entries(changes)) {
+			if (key === 'showMinified') {
+				//console.log('showMinified changed from' + oldValue + 'to' + newValue);
+				await buildCards();
+				//$this.showMinified = newValue;
+			}
+			if (key === 'scaleFactor') {
+				await scaleElements();
+				// console.log('scaleFactor changed from' + oldValue + 'to' + newValue);
+				//$this.scaleFactor = newValue;
+			}
+			if (key === 'showItems') {
+				//console.log('showItems changed from' + oldValue + 'to' + newValue);
+				await buildCards();
+				//$this.showItems = newValue;
+			}
+		}
+	});
+}
+
 function listenForDataUiModeChange() {
 	const touchControlsElement = document.getElementById('touchControls');
-
 	if (touchControlsElement) {
 		const observer = new MutationObserver((mutations) => {
 			mutations.forEach(async (mutation) => {
@@ -440,26 +461,7 @@ function listenForDataUiModeChange() {
 					const newValue = touchControlsElement.getAttribute('data-ui-mode');
 					console.log('New value:', newValue);
 					if(newValue === 'CONFIRM'){
-						let sessionData = Utils.LocalStorage.getSessionData();
-						let extensionSettings = await Utils.LocalStorage.getExtensionSettings();
-						if(extensionSettings.showItems.enemies) {
-							await Utils.PokeMapper.getPokemonArray(sessionData.enemyParty, sessionData.arena).then(async (ePokemonData) => {
-								enemiesPokemon = ePokemonData.pokemon;
-								weather = ePokemonData.hasOwnProperty('weather') ? ePokemonData.weather : null;
-								await createCardsDiv("enemies").then(() => {
-									scaleElements();
-								});
-							});
-						}
-						if(extensionSettings.showItems.allies) {
-							await Utils.PokeMapper.getPokemonArray(sessionData.party, sessionData.arena).then(async (ePokemonData) => {
-								alliesPokemon = ePokemonData.pokemon;
-								weather = ePokemonData.hasOwnProperty('weather') ? ePokemonData.weather : null;
-								await createCardsDiv("allies").then(() => {
-									scaleElements();
-								});
-							});
-						}
+						await buildCards()
 					}
 					//CONFIRM -- this is when game starts
 					//MODIFIER_SELECT -- this is in store
@@ -480,6 +482,30 @@ function listenForDataUiModeChange() {
 }
 
 
+async function buildCards(){
+	let sessionData = Utils.LocalStorage.getSessionData();
+	let extensionSettings = await Utils.LocalStorage.getExtensionSettings();
+	if(extensionSettings.showItems.enemies) {
+		await Utils.PokeMapper.getPokemonArray(sessionData.enemyParty, sessionData.arena).then(async (ePokemonData) => {
+			enemiesPokemon = ePokemonData.pokemon;
+			weather = ePokemonData.hasOwnProperty('weather') ? ePokemonData.weather : null;
+			await createCardsDiv("enemies").then(() => {
+				scaleElements();
+			});
+		});
+	}
+	if(extensionSettings.showItems.party) {
+		await Utils.PokeMapper.getPokemonArray(sessionData.party, sessionData.arena).then(async (ePokemonData) => {
+			alliesPokemon = ePokemonData.pokemon;
+			weather = ePokemonData.hasOwnProperty('weather') ? ePokemonData.weather : null;
+			await createCardsDiv("allies").then(() => {
+				scaleElements();
+			});
+		});
+	}
+}
+
+
 // let divId = message.type === 'UPDATE_ENEMIES_DIV' ? 'enemies' : 'allies'
 // if (message.type === 'UPDATE_ENEMIES_DIV') {
 // 	enemiesPokemon = message.pokemon
@@ -496,6 +522,7 @@ function listenForDataUiModeChange() {
 
 
 listenForDataUiModeChange();
+extensionSettingsListener();
 
 function ivComparison(pokeIv, dexIv) {
 	let iconA = "";

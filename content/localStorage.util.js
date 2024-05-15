@@ -7,7 +7,7 @@ export default class LocalStorageClass {
     }
 
     static #init($this) {
-        LocalStorageClass.#extensionSettingsListener($this);
+        // LocalStorageClass.#extensionSettingsListener($this);
         LocalStorageClass.#getExtensionSettings($this);
     }
 
@@ -31,24 +31,24 @@ export default class LocalStorageClass {
         });
     }
 
-    static #extensionSettingsListener($this) {
-        browserApi.storage.onChanged.addListener(function (changes, namespace) {
-            for (let [key, {oldValue, newValue}] of Object.entries(changes)) {
-                if (key === 'showMinified') {
-                    console.log('showMinified changed from' + oldValue + 'to' + newValue);
-                    //$this.showMinified = newValue;
-                }
-                if (key === 'scaleFactor') {
-                    console.log('scaleFactor changed from' + oldValue + 'to' + newValue);
-                    //$this.scaleFactor = newValue;
-                }
-                if (key === 'showItems') {
-                    console.log('showItems changed from' + oldValue + 'to' + newValue);
-                    //$this.showItems = newValue;
-                }
-            }
-        });
-    }
+    // static #extensionSettingsListener($this) {
+    //     browserApi.storage.onChanged.addListener(function (changes, namespace) {
+    //         for (let [key, {oldValue, newValue}] of Object.entries(changes)) {
+    //             if (key === 'showMinified') {
+    //                 console.log('showMinified changed from' + oldValue + 'to' + newValue);
+    //                 //$this.showMinified = newValue;
+    //             }
+    //             if (key === 'scaleFactor') {
+    //                 console.log('scaleFactor changed from' + oldValue + 'to' + newValue);
+    //                 //$this.scaleFactor = newValue;
+    //             }
+    //             if (key === 'showItems') {
+    //                 console.log('showItems changed from' + oldValue + 'to' + newValue);
+    //                 //$this.showItems = newValue;
+    //             }
+    //         }
+    //     });
+    // }
 
     async getExtensionSettings(){
         return await LocalStorageClass.#getExtensionSettings(this);
