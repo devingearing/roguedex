@@ -3,32 +3,31 @@ import CryptoJS from '../libs/crypto-js.min';
 
 export default class LocalStorageClass {
     constructor() {
-        this.ext_settings = LocalStorageClass.#getExtensionSettings();
-
         LocalStorageClass.#init(this);
     }
 
     static #init($this) {
         LocalStorageClass.#extensionSettingsListener($this);
+        LocalStorageClass.#getExtensionSettings($this);
     }
 
-    static #getExtensionSettings($this) {
-        browserApi.storage.sync.get(['showMinified', 'scaleFactor', 'showItems'], (data) => {
-            if (data.showMinified === undefined) {
-                browserApi.storage.sync.set({
-                    'showMinified': false
-                });
-            }
-            if (data.scaleFactor === undefined) {
-                browserApi.storage.sync.set({
-                    'scaleFactor': 1
-                });
-            }
-            if (data.showItems === undefined) {
-                browserApi.storage.sync.set({
-                    'showItems': {'enemies': true, 'party': true}
-                });
-            }
+    static async #getExtensionSettings($this) {
+        return new Promise((resolve) => {
+            browserApi.storage.sync.get(['showMinified', 'scaleFactor', 'showItems'], (data) => {
+                if (data.showMinified === undefined) {
+                    browserApi.storage.sync.set({ 'showMinified': false });
+                    data.showMinified = false;
+                }
+                if (data.scaleFactor === undefined) {
+                    browserApi.storage.sync.set({ 'scaleFactor': 1 });
+                    data.scaleFactor = 1;
+                }
+                if (data.showItems === undefined) {
+                    browserApi.storage.sync.set({ 'showItems': {'enemies': true, 'party': true} });
+                    data.showItems = {'enemies': true, 'party': true};
+                }
+                resolve(data);
+            });
         });
     }
 
@@ -49,6 +48,10 @@ export default class LocalStorageClass {
                 }
             }
         });
+    }
+
+    async getExtensionSettings(){
+        return await LocalStorageClass.#getExtensionSettings(this);
     }
 
     getSessionData(){

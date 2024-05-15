@@ -441,20 +441,25 @@ function listenForDataUiModeChange() {
 					console.log('New value:', newValue);
 					if(newValue === 'CONFIRM'){
 						let sessionData = Utils.LocalStorage.getSessionData();
-						await Utils.PokeMapper.getPokemonArray(sessionData.enemyParty, sessionData.arena).then(async (ePokemonData) =>{
-							enemiesPokemon = ePokemonData.pokemon;
-							weather = ePokemonData.hasOwnProperty('weather') ? ePokemonData.weather : null;
-							await createCardsDiv("enemies").then(()=>{
-								scaleElements();
+						let extensionSettings = await Utils.LocalStorage.getExtensionSettings();
+						if(extensionSettings.showItems.enemies) {
+							await Utils.PokeMapper.getPokemonArray(sessionData.enemyParty, sessionData.arena).then(async (ePokemonData) => {
+								enemiesPokemon = ePokemonData.pokemon;
+								weather = ePokemonData.hasOwnProperty('weather') ? ePokemonData.weather : null;
+								await createCardsDiv("enemies").then(() => {
+									scaleElements();
+								});
 							});
-						});
-						await Utils.PokeMapper.getPokemonArray(sessionData.party, sessionData.arena).then(async (ePokemonData) =>{
-							alliesPokemon = ePokemonData.pokemon;
-							weather = ePokemonData.hasOwnProperty('weather') ? ePokemonData.weather : null;
-							await createCardsDiv("allies").then(()=>{
-								scaleElements();
+						}
+						if(extensionSettings.showItems.allies) {
+							await Utils.PokeMapper.getPokemonArray(sessionData.party, sessionData.arena).then(async (ePokemonData) => {
+								alliesPokemon = ePokemonData.pokemon;
+								weather = ePokemonData.hasOwnProperty('weather') ? ePokemonData.weather : null;
+								await createCardsDiv("allies").then(() => {
+									scaleElements();
+								});
 							});
-						});
+						}
 					}
 					//CONFIRM -- this is when game starts
 					//MODIFIER_SELECT -- this is in store
