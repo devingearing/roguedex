@@ -2,6 +2,7 @@ const browserApi = typeof browser !== "undefined" ? browser : chrome;
 
 function sendMessage(data, message) {
     browserApi.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        console.log(tabs);
         browserApi.tabs.sendMessage(tabs[0].id, { type: message, data: data}, (response) => {
             if (response && response.success) {
                 console.log('Session Data Sent Successfully');
@@ -82,31 +83,12 @@ function convertPokemonId(pokemonId) {
 }
 
 browserApi.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
-   // console.log(request.extra);
-  // Happens when loading a savegame or continuing an old run
-  // if (request.type == 'GET_SAVEDATA') {
-  //     appendPokemonArrayToDiv(mapPartyToPokemonArray(request.data.enemyParty), request.data.arena, "UPDATE_ENEMIES_DIV")
-  //     appendPokemonArrayToDiv(mapPartyToPokemonArray(request.data.party), request.data.arena, "UPDATE_ALLIES_DIV")
-  // }
-  //   if(request.type == 'GET_SAVEDATA_2'){
-  //       console.log("*&^&**");
-  //       console.log("Received update save data", request.data);
-  //       console.log("*&^&**");
-  //   }
-  //   if(request.type === `GET_LOCALDATA`){
-  //       const decryptedString = CryptoJS.AES.decrypt(request.data, saveKey).toString(CryptoJS.enc.Utf8);
-  //       let sessionData = JSON.parse(decryptedString);
-  //       console.log("Setting from Local Data");
-  //       console.log(sessionData);
-  //       appendPokemonArrayToDiv(mapPartyToPokemonArray(sessionData.enemyParty), sessionData.arena, "UPDATE_ENEMIES_DIV")
-  //       appendPokemonArrayToDiv(mapPartyToPokemonArray(sessionData.party), sessionData.arena, "UPDATE_ALLIES_DIV")
-  //   }
-  //   if(request.type === "BCK_READ_LOCAL_STORAGE"){
-  //       console.log("BCK_READ_LOCAL_STORAGE Hit");
-  //   }
     if(request.type === "HTTP_SESSION_DATA"){
-        console.log("BK.js HTTP_SESSION_DATA Hit");
         sendMessage({data: request.data, type: 'HTTP_SESSION_DATA'});
+    }
+    if(request.type === "HTTP_PLAYER_DATA") {
+        console.log("Hit HTTP_STATS_DATA");
+        sendMessage({data: request.data, type: 'HTTP_PLAYER_DATA'});
     }
 });
 
@@ -116,24 +98,61 @@ browserApi.webRequest.onBeforeRequest.addListener(
             try {
                 let sessionData = JSON.parse(new TextDecoder().decode(details.requestBody.raw[0].bytes))
                 console.log("POST Session data:", sessionData)
-                if (details.url.includes("updateall")) sessionData = sessionData.session
-                sendMessage({data: JSON.parse(requestBody), type: 'HTTP_SESSION_DATA'});
+                //if (details.url.includes("updateall")) sessionData = sessionData.session
+                sendMessage({data: JSON.parse(sessionData), type: 'HTTP_SESSION_DATA'});
             } catch (e) {
                 console.error("Error while intercepting web request: ", e)
             }
         }
     },
     {
-        urls: ['https://api.pokerogue.net/savedata/update?datatype=1*', 'https://api.pokerogue.net/savedata/updateall']
+        urls: ['https://api.pokerogue.net/savedata/update?datatype=1*']
+    },
+    ["requestBody"]
+);
+browserApi.webRequest.onBeforeRequest.addListener(
+    function(details) {
+        if (details.method === 'POST') {
+            try {
+                let sessionData = JSON.parse(new TextDecoder().decode(details.requestBody.raw[0].bytes))
+                console.log("POST Player data:", sessionData)
+                sendMessage({data: JSON.parse(sessionData), type: 'HTTP_PLAYER_DATA'});
+            } catch (e) {
+                console.error("Error while intercepting web request: ", e)
+            }
+        }
+    },
+    {
+        urls: ['https://api.pokerogue.net/savedata/update?datatype=0*']
+    },
+    ["requestBody"]
+);
+browserApi.webRequest.onBeforeRequest.addListener(
+    function(details) {
+        if (details.method === 'POST') {
+            try {
+                let sessionData = JSON.parse(new TextDecoder().decode(details.requestBody.raw[0].bytes))
+                console.log("POST Update data:", sessionData)
+                //if (details.url.includes("updateall")) sessionData = sessionData.session
+                sendMessage({data: JSON.parse(sessionData.session), type: 'HTTP_SESSION_DATA'});
+                sendMessage({data: JSON.parse(sessionData.system), type: 'HTTP_PLAYER_DATA'});
+            } catch (e) {
+                console.error("Error while intercepting web request: ", e)
+            }
+        }
+    },
+    {
+        urls: ['https://api.pokerogue.net/savedata/updateall']
     },
     ["requestBody"]
 )
+
 
 // browserApi.webRequest.onBeforeSendHeaders.addListener(
 //     function(details) {
 //         if (details.url.includes('api.pokerogue.net/savedata/get?datatype=0')) {
 //             const requestBody = new TextDecoder("utf-8").decode(details.requestBody.raw[0].bytes);
-//             window.postMessage({ type: 'GET_SAVEDATA_2', data: JSON.parse(requestBody) }, '*');
+//             window.postMessage({ type: 'HTTP_PLAYER_DATA', data: JSON.parse(requestBody) }, '*');
 //         }
 //         return { requestHeaders: details.requestHeaders };
 //     },

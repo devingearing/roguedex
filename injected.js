@@ -47,7 +47,7 @@ window.fetch = async (...args) => {
             .clone()
             .json()
             .then(data => {
-                window.postMessage({ type: 'GET_SAVEDATA_2', data: data, extra: request }, '*');
+                window.postMessage({ type: 'GET_PLAYER_DATA', data: data }, '*');
             })
             .catch(err => console.error(err));
     }

@@ -64,6 +64,21 @@ export default class LocalStorageClass {
         const encryptedString = CryptoJS.AES.encrypt(jsonString, saveKey).toString();
         localStorage.setItem("sessionData", encryptedString);
     }
+
+    getPlayerData(){
+        const saveKey = 'x0i2O7WRiANTqPmZ'; // Temporary; secure encryption is not yet necessary
+        let localStorageData = localStorage.getItem("data");
+        const decryptedString = CryptoJS.AES.decrypt(localStorageData, saveKey).toString(CryptoJS.enc.Utf8);
+        return JSON.parse(decryptedString);
+    }
+
+    setPlayerData(playerData) {
+        console.log("Hit playerData");
+        const saveKey = 'x0i2O7WRiANTqPmZ'; // Temporary; secure encryption is not yet necessary
+        const jsonString = JSON.stringify(playerData);
+        const encryptedString = CryptoJS.AES.encrypt(jsonString, saveKey).toString();
+        localStorage.setItem("data", encryptedString);
+    }
 }
 
 

@@ -254,7 +254,6 @@ async function changePage(click) {
 async function createPokemonCardDiv(divId, pokemon) {
 	const data = await browserApi.storage.sync.get('showMinified');
 	const isMinified = (data.hasOwnProperty('showMinified') ? data.showMinified : false);
-	console.log(isMinified);
 	let returnObj;
 	if (isMinified) {
 		returnObj = createPokemonCardDivMinifed(divId, pokemon);
@@ -310,13 +309,10 @@ async function readLocalStorage(key) {
 
 function createPokemonCardDivMinifed(divId, pokemon) {
 
-	let savedData = JSON.parse(localStorage.getItem('updateSaveData'));
-
-	//console.log(savedData);
+	let savedData = Utils.LocalStorage.getPlayerData();
 	let dexData = savedData["dexData"];
 	let dexIvs = dexData[pokemon.baseId]["ivs"];
-	//console.log(pokemon.ivs);
-	//console.log(dexIvs);
+	console.log(dexIvs);
 
 	const card = document.createElement('div');
 	card.classList.add('pokemon-card');
@@ -329,7 +325,6 @@ function createPokemonCardDivMinifed(divId, pokemon) {
 	const iconWrapper = document.createElement('div');
 	iconWrapper.className = 'pokemon-icon';
 	const icon = document.createElement('img');
-	console.log(pokemon);
 	icon.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
 	iconWrapper.appendChild(icon);
 	infoRow.appendChild(iconWrapper);
@@ -382,7 +377,6 @@ function createPokemonCardDivMinifed(divId, pokemon) {
 }
 
 function createCardsMain(divId, pokemon){
-	console.log(pokemon);
 	const card = document.createElement('div');
 	card.classList.add('pokemon-card');
 
@@ -445,7 +439,7 @@ function listenForDataUiModeChange() {
 				if (mutation.type === 'attributes' && mutation.attributeName === 'data-ui-mode') {
 					const newValue = touchControlsElement.getAttribute('data-ui-mode');
 					console.log('New value:', newValue);
-					if(newValue === 'CONFIRM'){
+					if(newValue === 'CONFIRM' || newValue === `FIGHT`){
 						let sessionData = Utils.LocalStorage.getSessionData();
 						await Utils.PokeMapper.getPokemonArray(sessionData.enemyParty, sessionData.arena).then(async (ePokemonData) =>{
 							enemiesPokemon = ePokemonData.pokemon;
@@ -468,6 +462,8 @@ function listenForDataUiModeChange() {
 					//SUMMARY -- in pokemon inspect
 					//CONFIRM -- battle again
 					//COMMAND -- waiting for input
+					//FIGHT -- in battle
+					//BALL -- in battle
 				}
 			});
 		});
@@ -559,17 +555,12 @@ function createWrapperDiv(divId) {
 async function createCardsDiv(divId) {
 	let newDiv = createWrapperDiv(divId)
 
-	//fix how this works
 	let buttonsDiv = createArrowButtonsDiv(divId, true)
   newDiv.appendChild(buttonsDiv)
   let pokemon = {}
-	//let pokemon = pokemonData.pokemon;
   if (divId === 'enemies') {
-	  console.log("Current E Page: ", currentEnemyPage);
   	if (currentEnemyPage >= enemiesPokemon.length) currentEnemyPage = enemiesPokemon.length - 1
   	pokemon = enemiesPokemon[currentEnemyPage]
-	  console.log("Current E Pokemon");
-	  console.log(pokemon);
   }
   else {
   	if (currentAllyPage >= alliesPokemon.length) currentAllyPage = alliesPokemon.length - 1
@@ -626,8 +617,12 @@ browserApi.runtime.onMessage.addListener(async (incomingMessage, sender, sendRes
     sendResponse({ success: true });
 	}
 	if(message.type === "HTTP_SESSION_DATA"){
-		console.log("GOT THE MESSAGE WE NEEDED");
 		Utils.LocalStorage.setSessionData(message.data);
+		sendResponse({ success: true });
+	}
+	if(message.type === "HTTP_PLAYER_DATA"){
+		console.log("HTTP_PLAYER_DATA HIT");
+		Utils.LocalStorage.setPlayerData(message.data);
 		sendResponse({ success: true });
 	}
 });

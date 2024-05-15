@@ -84,11 +84,8 @@ export default class PokemonMapperClass{
 
     static async #getPokemonTypeEffectiveness($this, id) {
         const types = await PokemonMapperClass.#getPokeType(id);
-        console.log("Pokemon Types");
-        console.log(types);
         if (types) {
             const { weaknesses, resistances, immunities } = await PokemonMapperClass.#calculateTypeEffectiveness($this, types);
-            console.log(weaknesses, resistances, immunities);
             return {
                 'weaknesses': weaknesses,
                 'resistances': resistances,
@@ -102,7 +99,6 @@ export default class PokemonMapperClass{
         try {
             const response = await fetch(`https://pokeapi.co/api/v2/type/${type}`);
             const data = await response.json();
-            console.log(data);
             return data.damage_relations;
         } catch (error) {
             console.error(`Error fetching type effectiveness for ${type}:`, error);
@@ -112,8 +108,6 @@ export default class PokemonMapperClass{
 
     static async #calculateTypeEffectiveness($this, types) {
         const typeEffectiveness = await Promise.all(types.map(type => $this.getTypeEffectiveness(type)));
-        console.log("typeEffectiveness");
-        console.log(typeEffectiveness);
         if (typeEffectiveness.some(data => data === null)) {
             return null;
         }
@@ -185,8 +179,6 @@ export default class PokemonMapperClass{
         const pokemonPromises = pokemonArray.map(async (pokemon) => {
             const pokemonId = $this.I2P[pokemon.species].toLocaleLowerCase();
             const typeEffectiveness = await PokemonMapperClass.#getPokemonTypeEffectiveness($this, pokemonId);
-            console.log("Got pokemon", pokemonId, "type effectiveness", typeEffectiveness);
-
             let basePokemon = $this.findBasePokemon($this.I2P[pokemon.species]);
             return {
                 id: pokemon.species,

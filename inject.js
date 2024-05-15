@@ -22,24 +22,34 @@ window.addEventListener('message', function (e) {
           }
         });
     }
-    if(e.data.type === 'GET_SAVEDATA_2') {
-        //            localStorage.getItem('sessionData')
-        //console.log(e.data.extra);
-        browserApi.runtime.sendMessage({type: 'GET_SAVEDATA_2', data: e.data.data}, function (response) {
-            localStorage.setItem('updateSaveData', JSON.stringify(e.data.data));
-        });
-        // browserApi.runtime.sendMessage({type: 'GET_LOCALDATA', data: localStorage.getItem('sessionData'), extra: e.data.extra}, function (response) {
+    if(e.data.type === 'GET_PLAYER_DATA') {
+        //
+        // browserApi.runtime.sendMessage({type: 'GET_SAVEDATA_2', data: e.data.data}, function (response) {
+        //     localStorage.setItem('updateSaveData', JSON.stringify(e.data.data));
         // });
+        browserApi.runtime.sendMessage({ type: 'HTTP_PLAYER_DATA', data: e.data.data }, function(response) {
+            console.log(e.data.data);
+            if (response && response.success) {
+                console.log('Successfully updated player info');
+            } else {
+                console.error('Failed to update player info');
+            }
+        });
     }
     if (e.data.type === 'UPDATE_ALL') {
         browserApi.runtime.sendMessage({ type: 'HTTP_SESSION_DATA', data: (e.data.data)["session"]}, function(response) {
             if (response && response.success) {
-                console.log('Successfully updated game info');
+                console.log('Successfully updated game info (all)');
             } else {
-                console.error('Failed to update game info');
+                console.error('Failed to update game info (all)');
             }
-            // browserApi.runtime.sendMessage({type: 'GET_SAVEDATA', data: localStorage.getItem('sessionData')}, function (response) {
-            // });
+        });
+        browserApi.runtime.sendMessage({ type: 'HTTP_SESSION_DATA', data: (e.data.data)["session"]}, function(response) {
+            if (response && response.success) {
+                console.log('Successfully updated player info (all)');
+            } else {
+                console.error('Failed to update player info (all)');
+            }
         });
     }
 
