@@ -485,6 +485,8 @@ function listenForDataUiModeChange() {
 async function buildCards(){
 	let sessionData = Utils.LocalStorage.getSessionData();
 	let extensionSettings = await Utils.LocalStorage.getExtensionSettings();
+	document.getElementById('enemies').innerHTML = '';
+	document.getElementById('allies').innerHTML = '';
 	if(extensionSettings.showItems.enemies) {
 		await Utils.PokeMapper.getPokemonArray(sessionData.enemyParty, sessionData.arena).then(async (ePokemonData) => {
 			enemiesPokemon = ePokemonData.pokemon;
