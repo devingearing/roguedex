@@ -471,6 +471,7 @@ function listenForDataUiModeChange() {
 					//COMMAND -- waiting for input
 					//FIGHT -- in battle
 					//BALL -- in battle
+					//EGG_HATCH_SCENE -- eggs hatch duh
 				}
 			});
 		});

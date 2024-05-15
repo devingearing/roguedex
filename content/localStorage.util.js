@@ -4,11 +4,23 @@ import CryptoJS from '../libs/crypto-js.min';
 export default class LocalStorageClass {
     constructor() {
         LocalStorageClass.#init(this);
+        this.dataKey = LocalStorageClass.#getKey("data_");
+        this.sessionKey = LocalStorageClass.#getKey("sessionData2_");
     }
 
     static #init($this) {
         // LocalStorageClass.#extensionSettingsListener($this);
         LocalStorageClass.#getExtensionSettings($this);
+    }
+
+    static #getKey(matchString) {
+        const keys = Object.keys(localStorage);
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            if (key.includes(matchString)) {
+                return key;
+            }
+        }
     }
 
     static async #getExtensionSettings($this) {
@@ -55,8 +67,15 @@ export default class LocalStorageClass {
     }
 
     getSessionData(){
+//         const keys = Object.keys(localStorage);
+//
+// // Print the keys
+//         console.log("localStorage Keys:");
+//         keys.forEach((key) => {
+//             console.log(key);
+//         });
         const saveKey = 'x0i2O7WRiANTqPmZ'; // Temporary; secure encryption is not yet necessary
-        let localStorageData = localStorage.getItem("sessionData");
+        let localStorageData = localStorage.getItem(this.sessionKey);
         const decryptedString = CryptoJS.AES.decrypt(localStorageData, saveKey).toString(CryptoJS.enc.Utf8);
         return JSON.parse(decryptedString);
     }
@@ -65,12 +84,12 @@ export default class LocalStorageClass {
         const saveKey = 'x0i2O7WRiANTqPmZ'; // Temporary; secure encryption is not yet necessary
         const jsonString = JSON.stringify(sessionData);
         const encryptedString = CryptoJS.AES.encrypt(jsonString, saveKey).toString();
-        localStorage.setItem("sessionData", encryptedString);
+        localStorage.setItem(this.sessionKey, encryptedString);
     }
 
     getPlayerData(){
         const saveKey = 'x0i2O7WRiANTqPmZ'; // Temporary; secure encryption is not yet necessary
-        let localStorageData = localStorage.getItem("data");
+        let localStorageData = localStorage.getItem(this.dataKey);
         const decryptedString = CryptoJS.AES.decrypt(localStorageData, saveKey).toString(CryptoJS.enc.Utf8);
         return JSON.parse(decryptedString);
     }
@@ -80,7 +99,7 @@ export default class LocalStorageClass {
         const saveKey = 'x0i2O7WRiANTqPmZ'; // Temporary; secure encryption is not yet necessary
         const jsonString = JSON.stringify(playerData);
         const encryptedString = CryptoJS.AES.encrypt(jsonString, saveKey).toString();
-        localStorage.setItem("data", encryptedString);
+        localStorage.setItem(this.dataKey, encryptedString);
     }
 }
 
