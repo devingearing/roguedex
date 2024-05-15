@@ -44,7 +44,7 @@ window.addEventListener('message', function (e) {
                 console.error('Failed to update game info (all)');
             }
         });
-        browserApi.runtime.sendMessage({ type: 'HTTP_SESSION_DATA', data: (e.data.data)["session"]}, function(response) {
+        browserApi.runtime.sendMessage({ type: 'HTTP_PLAYER_DATA', data: (e.data.data)["system"]}, function(response) {
             if (response && response.success) {
                 console.log('Successfully updated player info (all)');
             } else {
