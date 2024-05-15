@@ -439,7 +439,7 @@ function listenForDataUiModeChange() {
 				if (mutation.type === 'attributes' && mutation.attributeName === 'data-ui-mode') {
 					const newValue = touchControlsElement.getAttribute('data-ui-mode');
 					console.log('New value:', newValue);
-					if(newValue === 'CONFIRM' || newValue === `FIGHT`){
+					if(newValue === 'CONFIRM'){
 						let sessionData = Utils.LocalStorage.getSessionData();
 						await Utils.PokeMapper.getPokemonArray(sessionData.enemyParty, sessionData.arena).then(async (ePokemonData) =>{
 							enemiesPokemon = ePokemonData.pokemon;
