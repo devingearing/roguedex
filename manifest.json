@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "Rogue Dex",
+  "version": "2.4",
+  "permissions": [
+    "activeTab",
+    "webRequest",
+    "webRequestBlocking",
+    "tabs",
+    "storage",
+    "cookies",
+    "debugger",
+    "*://*.pokerogue.net/*"
+
+  ],
+  "host_permissions": [
+    "https://pokerogue.net/*",
+    "https://api.pokerogue.net/*"
+  ],
+  "options_page": "options.html",
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
+  "action": {
+    "default_popup": "options.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://api.pokerogue.net/*",
+        "https://pokerogue.net/*"
+      ],
+      "js": ["inject.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": ["https://pokerogue.net/*"],
+      "js": ["bundle.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js", "injected.js", "libs/crypto-js.min.js", "assets/*"],
+      "matches": ["<all_urls>"],
+      "extension_ids": []
+    }
+  ]
+}

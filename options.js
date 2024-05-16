@@ -1,6 +1,7 @@
 const browserApi = typeof browser !== "undefined" ? browser : chrome;
 const scaleSlider = document.getElementById('scaleSlider');
 const scaleValue = document.getElementById('scaleValue');
+const extensionId = browserApi.runtime.id;
 
 function scaleElements() {
     const manualScaleFactor = (scaleSlider.value);
@@ -59,8 +60,14 @@ const restoreOptions = () => {
     });
 };
 
+function injectImages(){
+    let bodyEle = document.getElementById('mainBody');
+    bodyEle.style.background
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     restoreOptions();
+    injectImages();
     scaleSlider.addEventListener('input', scaleElements);
     document.getElementById('save').addEventListener('click', saveOptions);
 });
