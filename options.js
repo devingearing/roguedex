@@ -62,7 +62,7 @@ const restoreOptions = () => {
 
 function injectImages(){
     let bodyEle = document.getElementById('mainBody');
-    bodyEle.style.background
+    //bodyEle.style.background
 }
 
 document.addEventListener('DOMContentLoaded', () => {
