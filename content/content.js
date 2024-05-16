@@ -1,5 +1,6 @@
+const browserApi = typeof browser !== "undefined" ? browser : chrome;
 import Utils from "./utils.js";
-
+Utils.LocalStorage.clearLocalSessionData();
 // Creates the main wrapper div
 function createDiv() {
   const mainWrapper = document.createElement("div");
@@ -435,6 +436,7 @@ function extensionSettingsListener(){
 		for (let [key, {oldValue, newValue}] of Object.entries(changes)) {
 			if (key === 'showMinified') {
 				//console.log('showMinified changed from' + oldValue + 'to' + newValue);
+
 				await buildCards();
 				//$this.showMinified = newValue;
 			}
@@ -452,6 +454,9 @@ function extensionSettingsListener(){
 	});
 }
 
+
+
+let lastImportant = "";
 function listenForDataUiModeChange() {
 	const touchControlsElement = document.getElementById('touchControls');
 	if (touchControlsElement) {
@@ -460,18 +465,51 @@ function listenForDataUiModeChange() {
 				if (mutation.type === 'attributes' && mutation.attributeName === 'data-ui-mode') {
 					const newValue = touchControlsElement.getAttribute('data-ui-mode');
 					console.log('New value:', newValue);
-					if(newValue === 'CONFIRM'){
-						await buildCards()
+					// if(newValue === 'CONFIRM' && lastImportant !== 'TITLE') {
+					// 	Utils.LocalStorage.sessionKey = Utils.LocalStorage.getKey("sessionData");
+					// 	await buildCards()
+					// }
+					// if(newValue === 'CONFIRM' && lastImportant === 'TITLE'){
+					// 	lastImportant = 'CONFIRM';
+					// }
+					// if(newValue === 'TITLE'){
+					// 	lastImportant = newValue
+					// }
+
+					if(newValue === 'MODIFIER_SELECT'){
+						lastImportant = "MODIFIER_SELECT";
+						//Utils.LocalStorage.determineSession();
+						//await buildCards();
 					}
+					if(newValue === "MESSAGE" && lastImportant === "MODIFIER_SELECT") {
+						lastImportant = ""
+						await buildCards();
+					}
+
+					if(newValue === "FIGHT"){
+						await buildCards();
+					}
+
+					if(newValue === "SAVE_SLOT"){
+						Utils.LocalStorage.getPotentialSessionKeys();
+					}
+					if(newValue === "TITLE"){
+						Utils.LocalStorage.getPotentialSessionKeys();
+						console.log("Got Potential Session Keys");
+						console.log(Utils.LocalStorage.potentialSessions);
+					}
+
 					//CONFIRM -- this is when game starts
 					//MODIFIER_SELECT -- this is in store
 					//PARTY -- when in party
 					//SUMMARY -- in pokemon inspect
 					//CONFIRM -- battle again
 					//COMMAND -- waiting for input
-					//FIGHT -- in battle
-					//BALL -- in battle
+					//FIGHT -- in battle moves screen
+					//BALL -- in battle open ball select screen
 					//EGG_HATCH_SCENE -- eggs hatch duh
+					//SAVE_SLOT -- menu that shows saves
+					//TITLE -- title screen
 				}
 			});
 		});
@@ -658,6 +696,18 @@ browserApi.runtime.onMessage.addListener(async (incomingMessage, sender, sendRes
 	if(message.type === "HTTP_PLAYER_DATA"){
 		console.log("HTTP_PLAYER_DATA HIT");
 		Utils.LocalStorage.setPlayerData(message.data);
+		sendResponse({ success: true });
+	}
+	// if(message.type === "HTTP_VERIFY"){
+	// 	console.log("HTTP VERIFY HIT CS");
+	// 	console.log(message.data);
+	// 	Utils.LocalStorage.findSessionKeyFromSessionId(message.data);
+	// }
+	if(message.type === "HTTP_SESSION"){
+		console.log("HTT__SESSION__HIT");
+		console.log(message);
+		console.log("_________");
+		Utils.LocalStorage.tempSaveSlot = message.data;
 		sendResponse({ success: true });
 	}
 });

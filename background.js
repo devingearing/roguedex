@@ -87,8 +87,23 @@ browserApi.runtime.onMessage.addListener(async function(request, sender, sendRes
         sendMessage({data: request.data, type: 'HTTP_SESSION_DATA'});
     }
     if(request.type === "HTTP_PLAYER_DATA") {
-        console.log("Hit HTTP_STATS_DATA");
+        console.log("Hit HTTP_PLAYER_DATA");
         sendMessage({data: request.data, type: 'HTTP_PLAYER_DATA'});
+    }
+    // if (request.action === 'printAllCookies') {
+    //     browserApi.cookies.getAll({ domain: 'pokerogue.net', path: '/', firstPartyDomain: 'pokerogue.net' }, function (cookies) {
+    //         console.log(cookies);
+    //         sendResponse(cookies);
+    //     });
+    //     return true; //
+    // }
+    if(request.type === "HTTP_VERIFY"){
+        console.log("Hit HTTP_VERIFY")
+        sendMessage({data: request.data, type: 'HTTP_VERIFY'});
+    }
+    if(request.type === "HTTP_SESSION"){
+        console.log("Hit HTTP_SESSION");
+        sendMessage({data: request.data, type: 'HTTP_SESSION'});
     }
 });
 
@@ -127,6 +142,49 @@ browserApi.webRequest.onBeforeRequest.addListener(
     },
     ["requestBody"]
 );
+
+// Add the webRequest listener for the request body
+// browserApi.webRequest.onBeforeRequest.addListener(
+//     function(details) {
+//         console.log(details);
+//         if (details.method === 'GET') {
+//             try {
+//                 let sessionData = JSON.parse(new TextDecoder().decode(details.requestBody.raw[0].bytes));
+//                 console.log("POST Player data:", sessionData);
+//                 browserApi.runtime.sendMessage({data: sessionData, type: 'HTTP_SESSION'});
+//             } catch (e) {
+//                 console.error("Error while intercepting web request: ", e);
+//             }
+//         }
+//         return {}; // Returning an empty object to indicate no blocking
+//     },
+//     {
+//         urls: ['https://api.pokerogue.net/savedata/session?slot*']
+//     },
+//     ["requestBody"]
+// );
+
+// Add the webRequest listener for the request body
+browserApi.webRequest.onBeforeRequest.addListener(
+    function(details) {
+        console.log(details);
+        if (details.method === 'POST' && details.requestBody) {
+            try {
+                let sessionData = JSON.parse(new TextDecoder().decode(details.requestBody.raw[0].bytes));
+                console.log("POST Player data:", sessionData);
+                browserApi.runtime.sendMessage({data: sessionData, type: 'HTTP_SESSION'});
+            } catch (e) {
+                console.error("Error while intercepting web request: ", e);
+            }
+        }
+        return {}; // Returning an empty object to indicate no blocking
+    },
+    {
+        urls: ['https://api.pokerogue.net/savedata/session?slot*']
+    },
+    ["requestBody"]
+);
+
 browserApi.webRequest.onBeforeRequest.addListener(
     function(details) {
         if (details.method === 'POST') {

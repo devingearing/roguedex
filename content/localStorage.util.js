@@ -4,16 +4,23 @@ import CryptoJS from '../libs/crypto-js.min';
 export default class LocalStorageClass {
     constructor() {
         LocalStorageClass.#init(this);
-        this.dataKey = LocalStorageClass.#getKey("data_");
-        this.sessionKey = LocalStorageClass.#getKey("sessionData2_");
+        this.dataKey;
+        this.sessionKey;
+        this.sessionId;
+
+        this.potentialSessions = [];
+        this.tempSaveSlot;
+        this.clientSessionId;
     }
 
     static #init($this) {
         // LocalStorageClass.#extensionSettingsListener($this);
+        $this.dataKey = $this.getDataKey("data_");
+        //$this.sessionKey = $this.getKey("sessionData");
         LocalStorageClass.#getExtensionSettings($this);
     }
 
-    static #getKey(matchString) {
+    getDataKey(matchString) {
         const keys = Object.keys(localStorage);
         for (let i = 0; i < keys.length; i++) {
             const key = keys[i];
@@ -21,6 +28,88 @@ export default class LocalStorageClass {
                 return key;
             }
         }
+    }
+
+    clearLocalSessionData() {
+        const keys = Object.keys(localStorage);
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            if (key.includes("sessionData")) {
+                localStorage.removeItem(key);
+            }
+        }
+        console.log("LocalStorage Primed");
+    }
+
+    determineSession(){
+        let $this = this;
+        let slot = $this.tempSaveSlot.slot;
+        let dataToMatch = $this.tempSaveSlot.slot;
+        console.log($this.potentialSessions);
+        for(let sI in $this.potentialSessions) {
+            let curSessionKey = $this.potentialSessions[sI];
+            console.log(curSessionKey);
+            let curSessionData = curSessionKey.data;
+            if (curSessionData == dataToMatch) {
+                //return curSessionKey.key;
+                $this.sessionKey = curSessionKey.key;
+            }
+            else{
+                console.log("NO MATCH WITH SLOT: ", slot)
+            }
+        }
+    }
+
+    getPotentialSessionKeys(){
+        const keys = Object.keys(localStorage);
+        let potentialSessions = [];
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            console.log(key);
+            if (key.includes("sessionData")) {
+                let data = this.readLocalDataByKey(key);
+                console.log(data);
+                let potentialSettingsObject = {key: key, data: data}
+                potentialSessions.push(potentialSettingsObject);
+            }
+        }
+
+        this.potentialSessions = potentialSessions
+        return potentialSessions;
+    }
+
+    // findSessionKeyFromSessionId(sessionId){
+    //     let $this = this;
+    //         for(let sI in $this.potentialSessions){
+    //             let curSessionKey = $this.potentialSessions[sI];
+    //             let curSession = $this.readLocalDataByKey(curSessionKey);
+    //             console.log(curSession);
+    //         }
+    // }
+
+    // getCookie(cName, callback) {
+    //     const name = `${cName}=`;
+    //
+    //     browserApi.cookies.getAll({ name: "pokerogue_sessionId" }, function (cookies) {
+    //         if (cookies.length > 0) {
+    //             const cookie = cookies[0];
+    //             const value = cookie.value;
+    //
+    //             if (value.charAt(0) === ' ') {
+    //                 callback(value.substring(1));
+    //             } else {
+    //                 callback(value);
+    //             }
+    //         } else {
+    //             callback('');
+    //         }
+    //     });
+    // }
+
+    printAllCookies() {
+        browserApi.runtime.sendMessage({ action: 'printAllCookies' }, function (response) {
+            console.log('All Cookies:', response);
+        });
     }
 
     static async #getExtensionSettings($this) {
@@ -74,6 +163,17 @@ export default class LocalStorageClass {
 //         keys.forEach((key) => {
 //             console.log(key);
 //         });
+//         let sessionInfo = this.getCookie("pokerogue_sessionId", (data) => {
+//             return JSON.parse(data);
+//         });
+//
+//         console.log(sessionInfo);
+        //this.printAllCookies();
+
+        let data = this.getPotentialSessionKeys();
+        this.sessionKey = (data[0]).key;
+        //console.log(this.sessionKey);
+        //this.sessionKey = "sessionData2_ProSnow"
         const saveKey = 'x0i2O7WRiANTqPmZ'; // Temporary; secure encryption is not yet necessary
         let localStorageData = localStorage.getItem(this.sessionKey);
         const decryptedString = CryptoJS.AES.decrypt(localStorageData, saveKey).toString(CryptoJS.enc.Utf8);
@@ -81,6 +181,7 @@ export default class LocalStorageClass {
     }
 
     setSessionData(sessionData) {
+        //hard set
         const saveKey = 'x0i2O7WRiANTqPmZ'; // Temporary; secure encryption is not yet necessary
         const jsonString = JSON.stringify(sessionData);
         const encryptedString = CryptoJS.AES.encrypt(jsonString, saveKey).toString();
@@ -94,8 +195,14 @@ export default class LocalStorageClass {
         return JSON.parse(decryptedString);
     }
 
+    readLocalDataByKey(key){
+        const saveKey = 'x0i2O7WRiANTqPmZ'; // Temporary; secure encryption is not yet necessary
+        let localStorageData = localStorage.getItem(key);
+        const decryptedString = CryptoJS.AES.decrypt(localStorageData, saveKey).toString(CryptoJS.enc.Utf8);
+        return JSON.parse(decryptedString);
+    }
+
     setPlayerData(playerData) {
-        console.log("Hit playerData");
         const saveKey = 'x0i2O7WRiANTqPmZ'; // Temporary; secure encryption is not yet necessary
         const jsonString = JSON.stringify(playerData);
         const encryptedString = CryptoJS.AES.encrypt(jsonString, saveKey).toString();
