@@ -64,7 +64,7 @@ class LocalStorageClass {
 
     async getExtensionSettings() {
         return new Promise((resolve) => {
-            browserApi.storage.sync.get(['showMinified', 'scaleFactor', 'showEnemies', 'showParty', 'showSidebar', 'sidebarPosition'], (data) => {
+            browserApi.storage.sync.get(['showMinified', 'scaleFactor', 'showEnemies', 'showParty', 'showSidebar', 'sidebarPosition', 'sidebarScaleFactor'], (data) => {
                 if (data.showMinified === undefined) {
                     browserApi.storage.sync.set({ 'showMinified': false });
                     data.showMinified = false;
@@ -88,6 +88,10 @@ class LocalStorageClass {
                 if (data.sidebarPosition === undefined) {
                     browserApi.storage.sync.set({ 'sidebarPosition': 'Left' });
                     data.showSidebar = 'Left';
+                }
+                if (data.sidebarScaleFactor === undefined) {
+                    browserApi.storage.sync.set({ 'sidebarScaleFactor': 1 });
+                    data.sidebarScaleFactor = 1;
                 }
                 resolve(data);
             });

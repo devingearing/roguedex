@@ -7,7 +7,7 @@ class OptionsManager {
 
     saveOption(setting, value) {
         const settings = {};
-        if (setting === 'menuType' || setting === 'scaleFactor') {
+        if (setting === 'menuType' || setting === 'scaleFactor' || setting === 'sidebarScaleFactor') {
             settings[setting] = parseFloat(value);
         } else if (value === 'true' || value === 'false') {
             settings[setting] = value === 'true';
@@ -32,7 +32,7 @@ class OptionsManager {
                 document.querySelectorAll('.setting-options .option').forEach(option => {
                     const setting = option.getAttribute('data-setting');
                     const value = option.getAttribute('data-value');
-                    if (data[setting] === (setting === 'menuType' || setting === 'scaleFactor' ? parseFloat(value) : value === 'true')) {
+                    if (data[setting] === (setting === 'menuType' || setting === 'scaleFactor' || setting === 'sidebarScaleFactor' ? parseFloat(value) : value === 'true')) {
                         option.classList.add('selected');
                     }
                     else if (setting === 'sidebarPosition' && (data[setting] === value)) {
@@ -50,7 +50,7 @@ class OptionsManager {
     updateScale(value) {
         const scaleFactor = parseFloat(value);
         document.getElementById('scaleValue').textContent = scaleFactor;
-        // Update any other necessary elements based on scale factor
+        // Update any other necessary elements based on scale factor      
     }
 
     scaleElements() {
@@ -66,6 +66,7 @@ class OptionsManager {
         const menuType = parseInt(document.querySelector('.option[data-setting="menuType"].selected').getAttribute('data-value'), 10);
         const showSidebar = document.querySelector('.option[data-setting="showSidebar"].selected').getAttribute('data-value') === 'true';
         const sidebarPosition = document.querySelector('.option[data-setting="sidebarPosition"].selected').getAttribute('data-value') === 'true';
+        const sidebarScaleFactor = parseFloat(document.querySelector('.option[data-setting="sidebarScaleFactor"].selected').getAttribute('data-value'));
 
         this.browserApi.storage.sync.set({
             'showMinified': showMin,
@@ -74,7 +75,8 @@ class OptionsManager {
             'showParty': showParty,
             'menuType': menuType,
             'showSidebar': showSidebar,
-            'sidebarPosition': sidebarPosition
+            'sidebarPosition': sidebarPosition,
+            'sidebarScaleFactor': sidebarScaleFactor
         }, () => {
             if (this.browserApi.runtime.lastError) {
                 console.error('Error saving options:', this.browserApi.runtime.lastError);

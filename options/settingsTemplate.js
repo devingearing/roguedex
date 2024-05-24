@@ -41,6 +41,13 @@ const settingsTemplate = {
         options: ["Left", "Right" /*,"Top", "Bottom"*/],
         localStorage: "sidebarPosition",
         type: "String"
+    },
+    7: {
+        text: "Sidebar Scale",
+        options: ["0.5", "1.0", "1.5", "2.0","2.5","3.0"],
+        appendText: "x",
+        localStorage: "sidebarScaleFactor",
+        type: "Float"
     }
 };
 

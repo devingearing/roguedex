@@ -740,10 +740,23 @@ async function scaleElements() {
     let scaleFactor = scaleFactor_width < scaleFactor_height ? scaleFactor_width : scaleFactor_height;
     const enemiesDiv = document.getElementById('enemies');
     const alliesDiv = document.getElementById('allies');
-    const sidebarEnemiesDiv = document.getElementById('sidebar-enemy-box');
     enemiesDiv.style.fontSize = `${16 * scaleFactor * scaleFactorMulti}px`;
-    alliesDiv.style.fontSize = `${16 * scaleFactor * scaleFactorMulti}px`;
-    sidebarEnemiesDiv.style.fontSize = `${12 * scaleFactor * scaleFactorMulti}px`;
+    alliesDiv.style.fontSize = `${16 * scaleFactor * scaleFactorMulti}px`;    
+}
+
+/* should probably refactor this and combine it with the scaleElements() function */
+async function scaleSidebarElements() {
+    const data = await browserApi.storage.sync.get('sidebarScaleFactor');
+    const scaleFactorMulti = data.sidebarScaleFactor || 1;
+    const baseWidth = 1920; // Assume a base width of 1920 pixels
+    const baseHeight = 1080; // Assume a base height of 1080 pixels
+    const currentWidth = window.innerWidth;
+    const currentHeight = window.innerHeight;
+    const scaleFactor_width = currentWidth / baseWidth;
+    const scaleFactor_height = currentHeight / baseHeight;
+    let scaleFactor = scaleFactor_width < scaleFactor_height ? scaleFactor_width : scaleFactor_height;
+    const sidebarDiv = document.getElementById('roguedex-sidebar');
+    sidebarDiv.style.fontSize = `${12 * scaleFactor * scaleFactorMulti}px`;
 }
 
 async function toggleSidebar() {
@@ -860,6 +873,9 @@ function extensionSettingsListener() {
             if (key === 'sidebarPosition') {
                 let sessionData = Utils.LocalStorage.getSessionData();
                 await changeSidebarPosition(sessionData);
+            }
+            if (key === 'sidebarScaleFactor') {
+                await scaleSidebarElements();
             }
         }
     });
