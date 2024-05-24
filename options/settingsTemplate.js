@@ -29,6 +29,18 @@ const settingsTemplate = {
         options: ["1", "2", "3", "4", "5"],
         localStorage: "menuType",
         type: "Int"
+    },
+    5: {
+        text: "Show Sidebar",
+        options: ["No", "Yes"],
+        localStorage: "showSidebar",
+        type: "Bool"
+    },
+    6: {
+        text: "Sidebar Position",
+        options: ["Left", "Right" /*,"Top", "Bottom"*/],
+        localStorage: "sidebarPosition",
+        type: "String"
     }
 };
 

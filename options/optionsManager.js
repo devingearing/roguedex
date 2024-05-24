@@ -35,6 +35,9 @@ class OptionsManager {
                     if (data[setting] === (setting === 'menuType' || setting === 'scaleFactor' ? parseFloat(value) : value === 'true')) {
                         option.classList.add('selected');
                     }
+                    else if (setting === 'sidebarPosition' && (data[setting] === value)) {
+                        option.classList.add('selected');
+                    }
                 });
 
                 if (callback) {
@@ -61,13 +64,17 @@ class OptionsManager {
         const showParty = document.querySelector('.option[data-setting="showParty"].selected').getAttribute('data-value') === 'true';
         const scaleFactor = document.getElementById('scaleSlider').value;
         const menuType = parseInt(document.querySelector('.option[data-setting="menuType"].selected').getAttribute('data-value'), 10);
+        const showSidebar = document.querySelector('.option[data-setting="showSidebar"].selected').getAttribute('data-value') === 'true';
+        const sidebarPosition = document.querySelector('.option[data-setting="sidebarPosition"].selected').getAttribute('data-value') === 'true';
 
         this.browserApi.storage.sync.set({
             'showMinified': showMin,
             'scaleFactor': scaleFactor,
             'showEnemies': showEnemy,
             'showParty': showParty,
-            'menuType': menuType
+            'menuType': menuType,
+            'showSidebar': showSidebar,
+            'sidebarPosition': sidebarPosition
         }, () => {
             if (this.browserApi.runtime.lastError) {
                 console.error('Error saving options:', this.browserApi.runtime.lastError);

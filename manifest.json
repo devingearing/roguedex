@@ -5,9 +5,7 @@
   "permissions": [
     "activeTab",
     "webRequest",
-    "storage",
-    "https://if.daena.me/*",
-    "https://cdn.daena.me/*"
+    "storage"
   ],
   "host_permissions": [
     "https://pokerogue.net/*",
@@ -60,6 +58,11 @@
       ]
     }
   ],
+  "icons": {
+    "16": "RogueDex.png",
+    "48": "RogueDex.png",
+    "128": "RogueDex.png"
+  },
   "web_accessible_resources": [
     {
       "resources": [

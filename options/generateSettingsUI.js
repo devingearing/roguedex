@@ -31,6 +31,8 @@ const generateSettingsUI = () => {
                 label.classList.add('bool-label');
             } else if (setting.type === 'Float' || setting.type === 'Int') {
                 span.setAttribute('data-value', option);
+            } else if (setting.type === 'String') {
+                span.setAttribute('data-value', option);
             }
 
             settingOptions.appendChild(span);
