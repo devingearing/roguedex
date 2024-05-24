@@ -107,6 +107,24 @@ class PokemonMapperClass{
         return {}
     }
 
+    static async #getPokemonTypeEffectivenessDetailed($this, id) {
+        const types = await PokemonMapperClass.#getPokeType(id);
+        // ignore single type pokemon
+        if (types && (types[1] !== 'undefined')) {
+            const { weaknesses, resistances, immunities, cssClasses } = await PokemonMapperClass.#calculateTypeEffectivenessDetailed($this, types);            
+            return {
+                'weaknesses': weaknesses,
+                'resistances': resistances,
+                'immunities': immunities,
+                'cssClasses' : cssClasses
+            }
+        } 
+        else {
+            return { weaknesses : {}, resistances : {}, immunities : {} , cssClasses : {} }
+        }
+        return { }
+    }
+
     async getTypeEffectiveness(type) {
         try {
             const response = await fetch(`https://pokeapi.co/api/v2/type/${type}`);
@@ -116,6 +134,115 @@ class PokemonMapperClass{
             console.error(`Error fetching type effectiveness for ${type}:`, error);
             return null;
         }
+    }
+
+    /* 
+        Quick and dirty function to get type weaknesses for dual types, including x4 and x0.25 dmg multipliers.
+    */
+    static async #calculateTypeEffectivenessDetailed($this, types) {        
+        const typesInPokemondbOrder = [	
+            "normal",
+            "fire",
+            "water",
+            "electric",
+            "grass",
+            "ice",
+            "fighting",
+            "poison",
+            "ground",
+            "flying",
+            "psychic",
+            "bug",
+            "rock",
+            "ghost",
+            "dragon",
+            "dark",
+            "steel",
+            "fairy",
+            "stellar"
+        ]
+
+        const _ = 1;
+        const h = 1 / 2;     
+
+        // matrix of types against other types in pokemonDB order
+        // https://pokemondb.net/type
+        // taken from https://github.com/wavebeem/pkmn.help/blob/master/src/misc/data-matchups.ts
+        const genDefault = [
+            [_, _, _, _, _, _, _, _, _, _, _, _, h, 0, _, _, h, _, _],
+            [_, h, h, _, 2, 2, _, _, _, _, _, 2, h, _, h, _, 2, _, _],
+            [_, 2, h, _, h, _, _, _, 2, _, _, _, 2, _, h, _, _, _, _],
+            [_, _, 2, h, h, _, _, _, 0, 2, _, _, _, _, h, _, _, _, _],
+            [_, h, 2, _, h, _, _, h, 2, h, _, h, 2, _, h, _, h, _, _],
+            [_, h, h, _, 2, h, _, _, 2, 2, _, _, _, _, 2, _, h, _, _],
+            [2, _, _, _, _, 2, _, h, _, h, h, h, 2, 0, _, 2, 2, h, _],
+            [_, _, _, _, 2, _, _, h, h, _, _, _, h, h, _, _, 0, 2, _],
+            [_, 2, _, 2, h, _, _, 2, _, 0, _, h, 2, _, _, _, 2, _, _],
+            [_, _, _, h, 2, _, 2, _, _, _, _, 2, h, _, _, _, h, _, _],
+            [_, _, _, _, _, _, 2, 2, _, _, h, _, _, _, _, 0, h, _, _],
+            [_, h, _, _, 2, _, h, h, _, h, 2, _, _, h, _, 2, h, h, _],
+            [_, 2, _, _, _, 2, h, _, h, 2, _, 2, _, _, _, _, h, _, _],
+            [0, _, _, _, _, _, _, _, _, _, 2, _, _, 2, _, h, _, _, _],
+            [_, _, _, _, _, _, _, _, _, _, _, _, _, _, 2, _, h, 0, _],
+            [_, _, _, _, _, _, h, _, _, _, 2, _, _, 2, _, h, _, h, _],
+            [_, h, h, h, _, 2, _, _, _, _, _, _, 2, _, _, _, h, 2, _],
+            [_, h, _, _, _, _, 2, h, _, _, _, _, _, _, 2, 2, h, _, _],
+            [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+        ];
+
+        let type1 = types[0]
+        let type2 = types[1]
+        let primaryIndex	= typesInPokemondbOrder.indexOf(type1)
+        let secondaryIndex	= typesInPokemondbOrder.indexOf(type2)
+
+        //let results = { defenderPair : [type1, type2], immune : [], normal : [], half : [], quarter : [], double : [], quadrupel : [] }
+        let weaknesses = { 'normal' : [], 'double' : [] }
+        let resistances = { 'normal' : [], 'double' : [] }
+        let immunities = { 'normal' : [] }
+        let cssClasses = {}
+        //const typeEffectivenessObj = {}
+
+        typesInPokemondbOrder.forEach((attackerType, i) => {
+            let defenderType_1 = genDefault[i][primaryIndex]
+            let defenderType_2 = genDefault[i][secondaryIndex]
+
+            // at least 1 type is immune => immune
+            if (defenderType_1 == 0 || defenderType_2 == 0) {
+                immunities.normal.push(attackerType)
+                cssClasses[attackerType] = 'no-dmg'
+                return
+            }
+            // both types are weak => quadrupel dmg
+            else if ((defenderType_1 == 2 && defenderType_2 == 2)) {
+                weaknesses.double.push(attackerType)
+                cssClasses[attackerType] = 'super-dmg'
+            }
+            // one type is weak, the other takes normal dmg => double dmg
+            else if ((defenderType_1 == 2 && defenderType_2 == 1) || (defenderType_2 == 2 && defenderType_1 == 1)) {
+                weaknesses.normal.push(attackerType)
+                cssClasses[attackerType] = 'double-dmg'
+            }
+            // one type is weak, the other resists (half) => normal dmg
+            else if ((defenderType_1 == 2 && defenderType_2 == h) || (defenderType_2 == 2 && defenderType_1 == h)) {
+                // for the moment don't return, default dmg not being used
+            }
+            // both types take normal dmg => normal dmg
+            else if (defenderType_1 == _ && defenderType_2 == _) {
+                // for the moment don't return, default dmg not being used
+            }
+            // one type resists, the other takes normal dmg => half dmg
+            else if ((defenderType_1 == h && defenderType_2 == _) || (defenderType_2 == h && defenderType_1 == _)) {
+                resistances.normal.push(attackerType)
+                cssClasses[attackerType] = 'resist'
+            }
+            // both types resist (half) => quarter dmg
+            else if (defenderType_1 == h && defenderType_2 == h) {
+                resistances.double.push(attackerType)
+                cssClasses[attackerType] = 'super-resist'
+            }
+        });
+
+        return { weaknesses, resistances, immunities, cssClasses };    
     }
 
     static async #calculateTypeEffectiveness($this, types) {
@@ -232,6 +359,7 @@ class PokemonMapperClass{
         const pokemonPromises = pokemonArray.map(async (pokemon) => {
             const pokemonId = $this.I2P[$this.convertPokemonId(pokemon.species)].toLocaleLowerCase();
             const typeEffectiveness = await PokemonMapperClass.#getPokemonTypeEffectiveness($this, pokemonId);
+            const typeEffectivenessDetailed = await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, pokemonId);
             let basePokemon = $this.findBasePokemon($this.I2P[pokemon.species]);
             let name = $this.getPokemonName(pokemon);
             return {
@@ -241,6 +369,12 @@ class PokemonMapperClass{
                     weaknesses: Array.from(typeEffectiveness.weaknesses),
                     resistances: Array.from(typeEffectiveness.resistances),
                     immunities: Array.from(typeEffectiveness.immunities),
+                },
+                typeEffectivenessDetailed: {
+                    weaknesses: typeEffectivenessDetailed.weaknesses,
+                    resistances: typeEffectivenessDetailed.resistances,
+                    immunities: typeEffectivenessDetailed.immunities,
+                    cssClasses: typeEffectivenessDetailed.cssClasses,
                 },
                 ivs: pokemon.ivs,
                 ability: await $this.getPokemonAbility(pokemon.species, pokemon.abilityIndex, pokemon.fusionSpecies, pokemon.fusionAbilityIndex),

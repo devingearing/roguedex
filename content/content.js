@@ -153,7 +153,11 @@ function createTooltipDiv(tip) {
 }
 
 // Current values: weaknesses, resistances, immunities
-function createTypeEffectivenessWrapper(typeEffectivenesses) {
+function createTypeEffectivenessWrapper(typeEffectivenesses, typeEffectivenessDetailed = {}) {
+    console.log(typeEffectivenesses)
+    console.log(typeEffectivenessDetailed)
+    console.log(typeEffectivenessDetailed.cssClasses)    
+
     let typesHTML = `
 		${Object.keys(typeEffectivenesses).map((effectiveness) => {
         if (typeEffectivenesses[effectiveness].length === 0) return ''
@@ -166,12 +170,14 @@ function createTypeEffectivenessWrapper(typeEffectivenesses) {
 	      <div class="pokemon-${effectiveness} tooltip">
 
 	          ${typeEffectivenesses[effectiveness].map((type, counter) => `
+                  
 	              ${/* The current html structure requires to wrap every third element in a div, the implementation here gets a bit ugly. */''}
 	              ${((counter + 1) % 3 === 1) ?
             `<div>`
             : ''}
 
-	              <div class="type-icon" style="background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/sword-shield/${Types[type]}.png')"></div>
+	              <div class="type-icon ${getTypeEffectivenessCssClass(type, typeEffectivenessDetailed)} " 
+                  style="background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/sword-shield/${Types[type]}.png')"></div>
 	              
 	              ${/* Closing div, after every third element or when the arrays max length is reached. */''}
 	              ${((counter + 1) % 3 === 0) || ((counter + 1) === typeEffectivenesses[effectiveness].length) ?
@@ -184,6 +190,14 @@ function createTypeEffectivenessWrapper(typeEffectivenesses) {
     }).join('')}
   `
     return typesHTML
+}
+
+function getTypeEffectivenessCssClass(type, typeEffectivenessDetailed) {
+    try {
+        return typeEffectivenessDetailed.cssClasses[type]
+    } catch (error) {
+        return ''
+    }
 }
 
 function createTooltipDiv(tip) {
@@ -672,7 +686,7 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
                             <div class="pokemon-card-graphics-block">
                                 <canvas id="pokemon-icon_sidebar_${partyID}_${counter}" class="pokemon-icon">
                                 </canvas>
-                                ${createTypeEffectivenessWrapper(pokemon.typeEffectiveness)}
+                                ${createTypeEffectivenessWrapper(pokemon.typeEffectiveness, pokemon.typeEffectivenessDetailed)}
                             </div>
 
                             <div class="pokemon-card-text-block">

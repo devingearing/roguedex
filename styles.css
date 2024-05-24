@@ -154,6 +154,25 @@ body.sidebar-Bottom {
     );
 }
 
+.pokemon-weaknesses .super-dmg, .pokemon-weaknesses .super-resist,
+.pokemon-resistances .super-dmg, .pokemon-resistances .super-resist,
+.pokemon-immunities .super-dmg, .pokemon-immunities .super-resist {
+    border: solid 1px white;
+    animation: pulsate 1s ease-out;
+    animation-iteration-count: infinite;
+    opacity: 1;
+}
+@keyframes pulsate {
+    0% {-webkit-transform: scale(0.9, 0.9); opacity: 0.8;}
+    50% {opacity: 1.0;}
+    100% {-webkit-transform: scale(1.1, 1.1); opacity: 0.8;}
+}
+@keyframes opacityPulse {
+    0% {opacity: 0.5;}
+    50% {opacity: 1.0;}
+    100% {opacity: 0.5;}
+}
+
 /*   */
 
 .allies-team {
