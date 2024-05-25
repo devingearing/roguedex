@@ -303,6 +303,7 @@ class PokemonMapperClass{
     }
 
     async getPokemonAbility(pokemonId, pokemonAbilityIndex, fusionId, fusionAbilityIndex) {
+        let $this = this;
         let pokeID;
         let abilityIndex;
         if(fusionId){
@@ -310,7 +311,8 @@ class PokemonMapperClass{
             abilityIndex = fusionAbilityIndex;
         }
         else{
-            pokeID = (this.I2P[pokemonId]).toLowerCase();
+            //pokeID = (this.I2P[pokemonId]).toLowerCase();
+            pokeID = $this.fixVariantPokemonNames($this.I2P, pokemonId).toLocaleLowerCase();
             abilityIndex = pokemonAbilityIndex;
         }
         try {
@@ -357,13 +359,15 @@ class PokemonMapperClass{
         }
 
         const pokemonPromises = pokemonArray.map(async (pokemon) => {
-            const pokemonId = $this.I2P[$this.convertPokemonId(pokemon.species)].toLocaleLowerCase();
+            const pokemonId = $this.fixVariantPokemonNames($this.I2P, pokemon.species).toLocaleLowerCase();
+            console.log(pokemonId)
+            //const pokemonId = $this.I2P[$this.convertPokemonId(pokemon.species)].toLocaleLowerCase();
             const typeEffectiveness = await PokemonMapperClass.#getPokemonTypeEffectiveness($this, pokemonId);
             const typeEffectivenessDetailed = await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, pokemonId);
             let basePokemon = $this.findBasePokemon($this.I2P[pokemon.species]);
             let name = $this.getPokemonName(pokemon);
             return {
-                id: pokemon.species,
+                id: $this.convertPokemonId(pokemon.species),
                 name: $this.capitalizeFirstLetter(name.toUpperCase()),
                 typeEffectiveness: {
                     weaknesses: Array.from(typeEffectiveness.weaknesses),
@@ -398,7 +402,8 @@ class PokemonMapperClass{
             //getFusedSpeciesName
         }
         else{
-            return this.I2P[pokemon.species]
+            //this.I2P[pokemon.species]
+            return this.fixVariantPokemonNames(this.I2P, pokemon.species)                
         }
 
     }
@@ -461,6 +466,30 @@ class PokemonMapperClass{
         return `${speciesAPrefix || speciesBPrefix}${fragA}${fragB}${speciesBSuffix || speciesASuffix}`;
     }
 
+    fixVariantPokemonNames(I2P, pokemonSpeciesID) {
+        /* 
+        convertPokemonId() isn't working for a bunch of pokemon.
+        At least not when trying to get the pokemon identifier/name via '$this.I2P[pokemonSpeciesID]'.
+        For example in the function 'getPokemonArray()'.
+        I2P has the same keys as the conversion list (2019 ... 8901), it doesn't have keys matching the values that are returned by the conversion 
+        list (10091 ... 10272), so the return value is always undefined when any converted ID is used as a I2P key.
+        That would effect variants like galar and alola pokemon.
+        
+        So for anything that needs a pokemon identifier like 'farfetched-galar' or 'farfetched' instead of the 
+        converted ID (number), this is a quick workaround.
+        */
+        const pokemonIdentifier = I2P[pokemonSpeciesID];
+
+        if (pokemonSpeciesID > 2018) {
+            // turns something like GALAR_FARFETCHD into FARFETCHD-GALAR, which is the correct pokemon identifier used by pokeapi
+            const splits = pokemonIdentifier.split('_');
+            return splits[1] + '-' + splits[0];
+        }
+        else {
+            return pokemonIdentifier
+        }
+    }
+
     convertPokemonId(pokemonId) {
         const conversionList = {
             2019: 10091,
@@ -482,23 +511,23 @@ class PokemonMapperClass{
             2103: 10114,
             2105: 10115,
             2670: 10061,
-            4052: 10162,
-            4077: 10163,
-            4078: 10164,
-            4079: 10165,
-            4080: 10166,
-            4083: 10167,
-            4110: 10168,
-            4122: 10169,
-            4144: 10170,
-            4145: 10171,
-            4146: 10172,
-            4199: 10173,
-            4222: 10174,
-            4263: 10175,
-            4264: 10176,
-            4554: 10177,
-            4555: 10178,
+            4052: 10161,
+            4077: 10162,
+            4078: 10163,
+            4079: 10164,
+            4080: 10165,
+            4083: 10166,
+            4110: 10167,
+            4122: 10168,
+            4144: 10169,
+            4145: 10170,
+            4146: 10171,
+            4199: 10172,
+            4222: 10173,
+            4263: 10174,
+            4264: 10175,
+            4554: 10176,
+            4555: 10177,
             4562: 10179,
             4618: 10180,
             6058: 10229,
