@@ -46,16 +46,22 @@ let wrapperDivPositions = {
     }
 }
 
-function createEnemyDiv() {
+function createEnemyDiv(showSidebar = false) {
     const enemies = document.createElement("div");
     enemies.className = 'enemy-team'
+    if (showSidebar) {
+        enemies.className = 'hidden'
+    }
     enemies.id = "enemies";
     return enemies;
 }
 
-function createAlliesDiv() {
+function createAlliesDiv(showSidebar = false) {
     const allies = document.createElement("div");
     allies.className = 'allies-team'
+    if (showSidebar) {
+        allies.className = 'hidden'
+    }
     allies.id = "allies";
     return allies;
 }
@@ -154,10 +160,6 @@ function createTooltipDiv(tip) {
 
 // Current values: weaknesses, resistances, immunities
 function createTypeEffectivenessWrapper(typeEffectivenesses, typeEffectivenessDetailed = {}) {
-    console.log(typeEffectivenesses)
-    console.log(typeEffectivenessDetailed)
-    console.log(typeEffectivenessDetailed.cssClasses)    
-
     let typesHTML = `
 		${Object.keys(typeEffectivenesses).map((effectiveness) => {
         if (typeEffectivenesses[effectiveness].length === 0) return ''
@@ -282,7 +284,7 @@ async function createPokemonCardDiv(cardId, pokemon) {
     // getPokemonIcon(pokemon);
     let pokemonImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
     const opacitySlider = createOpacitySliderDiv(cardId, wrapperDivPositions[cardId].opacity, opacityRangeMin, opacityRangeMax);
-    const typeEffectivenessHTML = createTypeEffectivenessWrapper(pokemon.typeEffectiveness);
+    const typeEffectivenessHTML = createTypeEffectivenessWrapper(pokemon.typeEffectiveness, pokemon.typeEffectivenessDetailed);
     let cardHTML = `
   	<div class="pokemon-cards">
 	    <div class="pokemon-card">
@@ -525,7 +527,7 @@ async function createPokemonCardDiv_minified(cardId, pokemon) {
     let opacityRangeMax = 100;
     let pokemonImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
     const opacitySlider = createOpacitySliderDiv(cardId, wrapperDivPositions[cardId].opacity, opacityRangeMin, opacityRangeMax);
-    const typeEffectivenessHTML = createTypeEffectivenessWrapper(pokemon.typeEffectiveness);
+    const typeEffectivenessHTML = createTypeEffectivenessWrapper(pokemon.typeEffectiveness, pokemon.typeEffectivenessDetailed);
     let ivsGeneratedHTML = generateIVsHTML(pokemon, dexIvs);
     //${opacitySlider.html}
     // <div style="display: flex;">
@@ -570,14 +572,14 @@ async function createPokemonCardDiv_minified(cardId, pokemon) {
     return cardObj
 }
 
-function createWrapperDiv(divId) {
+function createWrapperDiv(divId, showSidebar) {
     const oldDiv = document.getElementById(divId)
     if (oldDiv) {
         wrapperDivPositions[divId].top = oldDiv.style.top;
         wrapperDivPositions[divId].left = oldDiv.style.left;
         oldDiv.remove();
     }
-    const newDiv = divId === 'enemies' ? createEnemyDiv() : createAlliesDiv()
+    const newDiv = divId === 'enemies' ? createEnemyDiv(showSidebar) : createAlliesDiv(showSidebar)
     enableDragElement(newDiv)
     newDiv.style.top = wrapperDivPositions[divId].top
     newDiv.style.left = wrapperDivPositions[divId].left
@@ -619,7 +621,7 @@ async function chooseCardType(divId, pokemon, minified){
 async function createCardsDiv(divId, pokemonData, pokemonIndex) {
     const pokemon = pokemonData[pokemonIndex]
     let extensionSettings = await Utils.LocalStorage.getExtensionSettings();
-    let newDiv = createWrapperDiv(divId);
+    let newDiv = createWrapperDiv(divId, extensionSettings.showSidebar);
 
     return await chooseCardType(divId, pokemon, extensionSettings.showMinified).then(async (cardObj) =>{
         const buttonsObj = createArrowButtonsDiv(divId, "↑", "↓", extensionSettings.showMinified);
@@ -647,79 +649,107 @@ async function createCardsDiv(divId, pokemonData, pokemonIndex) {
 function createSidebar() {
     const sidebarHtml = `
         <div class="roguedex-sidebar" id="roguedex-sidebar">
-            <div class="sidebar-header">
+            <div class="sidebar-header" id="sidebar-header">
                 <span>RogueDex</span>
             </div>
             <div class="sidebar-enemies-box visible" id="sidebar-enemies-box"></div>
             <div class="sidebar-allies-box visible" id="sidebar-allies-box"></div>
         </div>
     `
+    const bottomPanelHtml = `
+        <div class="roguedex-bottom-panel sidebar-Left" id="roguedex-bottom-panel">
+            <div class="roguedex-bottom-panel-content">RogueDex Bottom Panel</div>
+        </div>
+    `
+
     document.body.insertAdjacentHTML("afterbegin", sidebarHtml)
+    document.body.insertAdjacentHTML("beforeend", bottomPanelHtml)
+}
+
+function createSidebarTypeEffectivenessWrapper(typeEffectivenesses, typeEffectivenessDetailed = {}) {
+    let typesHTML = `
+		${Object.keys(typeEffectivenesses).map((effectiveness) => {
+        if (typeEffectivenesses[effectiveness].length === 0) return ''
+        
+        return `
+	        <div class="pokemon-type-effectiveness-category pokemon-type-${effectiveness}">
+	            ${typeEffectivenesses[effectiveness].map((type, counter) => `                    
+                    <div class="pokemon-type-icon ${getTypeEffectivenessCssClass(type, typeEffectivenessDetailed)}" style="background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/sword-shield/${Types[type]}.png')"></div>
+	            `).join('')}	          
+	        </div>
+	    `}).join('')}
+    `
+    return typesHTML
 }
 
 /*
     Updates party information for both sides (allies, enemies) in the sidebar.    
 */
 async function updateSidebarCards(partyID, sessionData, pokemonData) {
-    const sidebarPartyElement = document.getElementById(`sidebar-${partyID}-box`)
-    const extensionSettings = await Utils.LocalStorage.getExtensionSettings()
+    const sidebarPartyElement = document.getElementById(`sidebar-${partyID}-box`)    
     let savedData = Utils.LocalStorage.getPlayerData()
-    let dexData = savedData["dexData"]    
+    let dexData = savedData["dexData"]
 
-    sidebarPartyElement.replaceChildren(); 
+    sidebarPartyElement.replaceChildren();
 
-    let partyHeader = '';
-    if (extensionSettings.showParty && (partyID == 'enemies')) {
-        partyHeader = `<div class="sidebar-box-header"><span class="text-base sidebar-party-header">Enemy Party</span></div>`
-    } 
-    else if (extensionSettings.showEnemies && (partyID == 'allies')) {
-        partyHeader = `<div class="sidebar-box-header"><span class="text-base sidebar-party-header">Ally Party</span></div>`
-    }
-
-    let partyHtml = `
-            ${partyHeader}
-
+    let partyWrapperHtml = `
+        <div class="${partyID}-party">
             ${pokemonData.pokemon.map((pokemon, counter) => `
-                <div id="sidebar_${partyID}_${counter}">
-                    <div>
-                        <div class="pokemon-card">
-                            <div class="pokemon-card-graphics-block">
-                                <canvas id="pokemon-icon_sidebar_${partyID}_${counter}" class="pokemon-icon">
-                                </canvas>
-                                ${createTypeEffectivenessWrapper(pokemon.typeEffectiveness, pokemon.typeEffectivenessDetailed)}
-                            </div>
-
-                            <div class="pokemon-card-text-block">
-                                <div class="text-base">
-                                    <span class="tooltip ${pokemon.ability.isHidden ? 'hidden-ability' : ''}">
-                                        Ability: ${pokemon.ability.name} 
-                                        ${createTooltipDiv(pokemon.ability.description)}
-                                    </span>
-                                    &nbsp-&nbsp 
-                                    <span class="tooltip">
-                                        Nature: ${pokemon.nature}
-                                        ${createTooltipDiv("")}
-                                    </span>
-                                </div>
-
-                                <div class="text-base stat-cont">
-                                    ${generateIVsHTML(pokemon, dexData[pokemon.baseId]["ivs"])}
-                                </div>
-
-                                ${(weather.type && weather.turnsLeft) ? 
-                                `<span class="text-base">Weather: ${weather.type}, Turns Left: ${weather.turnsLeft}</span>`
-                                : ''}
-                            </div>
+                <div class="pokemon-entry" id="sidebar_${partyID}_${counter}">
+                    <div class="pokemon-entry-image">
+                        <canvas id="pokemon-icon_sidebar_${partyID}_${counter}" class="pokemon-entry-icon"></canvas>
+                    </div>
+                    <div class="pokemon-type-effectiveness-wrapper">
+                        ${createSidebarTypeEffectivenessWrapper(pokemon.typeEffectiveness, pokemon.typeEffectivenessDetailed)}
+                    </div>
+                    <div class="pokemon-info-text-wrapper">
+                        <div class="pokemon-ability-nature">
+                            <span class="pokemon-ability tooltip ${pokemon.ability.isHidden ? 'hidden-ability' : ''}">
+                                Ability: ${pokemon.ability.name} 
+                                ${createTooltipDiv(pokemon.ability.description)}
+                            </span>
+                            &nbsp-&nbsp
+                            <span class="pokemon-nature tooltip">
+                                Nature: ${pokemon.nature}
+                                ${createTooltipDiv("")}
+                            </span>
+                        </div>                       
+                        
+                        <div class="pokemon-ivs stat-cont">
+                            ${generateIVsHTML(pokemon, dexData[pokemon.baseId]["ivs"])}
                         </div>
                     </div>
                 </div>
             `).join('')}
+        </div>
     `
-    sidebarPartyElement.insertAdjacentHTML("afterbegin", partyHtml)
+    sidebarPartyElement.insertAdjacentHTML("afterbegin", partyWrapperHtml)
 
     pokemonData.pokemon.forEach(function (value, i) {
         getPokemonIcon(value, `sidebar_${partyID}_${i}`)
     })
+
+    if (weather.type && weather.turnsLeft) {
+        await updateBottomPanel(pokemonData)
+    }
+}
+
+async function updateBottomPanel(pokemonData) {
+    const bottomPanelElement = document.getElementById(`roguedex-bottom-panel`)
+
+    bottomPanelElement.replaceChildren();
+
+    let weatherHtml = `
+        <div class="roguedex-bottom-panel-content">
+            <div class="roguedex-bottom-panel-header">RogueDex Bottom Panel</div>
+            <div class="roguedex-bottom-panel-weather-box">
+                <div class="text-base">
+                    Weather: ${weather.type}, Turns Left: ${weather.turnsLeft}
+                </div>
+            </div>
+        </div>    
+    `
+    bottomPanelElement.insertAdjacentHTML("afterbegin", weatherHtml)
 }
 
 function deleteAllChildren(element) {
@@ -736,6 +766,20 @@ function deleteWrapperDivs() {
         console.log(enemies);
         deleteAllChildren(enemies);
         let allies = document.getElementById("allies");
+        deleteAllChildren(allies);
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+function clearSidebar() {
+    try {
+        console.log("DELETE CALLED [for sidebar]")
+        let enemies = document.getElementById("sidebar-enemies-box");
+        let allies = document.getElementById("sidebar-allies-box");
+        //console.log(enemies);
+        //console.log(allies);
+        deleteAllChildren(enemies);
         deleteAllChildren(allies);
     } catch (e) {
         console.error(e)
@@ -777,6 +821,7 @@ async function toggleSidebar() {
     const data = await browserApi.storage.sync.get('showSidebar')
     const sidebarToggleState = data.showSidebar
     let sidebarElement = document.getElementById('roguedex-sidebar')
+    let bottomPanelElement = document.getElementById('roguedex-bottom-panel')
     let gameAppElement = document.getElementById('app')
     let runningStatusElement = document.getElementsByClassName('running-status')[0]
     let enemyCardDiv = document.getElementById('enemies')
@@ -787,6 +832,7 @@ async function toggleSidebar() {
         sidebarElement.classList.add('active')
         gameAppElement.classList.add('sidebar-active')
         runningStatusElement.classList.add('sidebar-active')
+        bottomPanelElement.classList.add('sidebar-active')
 
         allyCardDiv.classList.add('hidden')
         enemyCardDiv.classList.add('hidden')
@@ -796,6 +842,7 @@ async function toggleSidebar() {
         sidebarElement.classList.add('hidden')
         gameAppElement.classList.remove('sidebar-active')
         runningStatusElement.classList.remove('sidebar-active')
+        bottomPanelElement.classList.remove('sidebar-active')
 
         allyCardDiv.classList.remove('hidden')
         enemyCardDiv.classList.remove('hidden')
@@ -807,9 +854,12 @@ async function changeSidebarPosition() {
     const data = await browserApi.storage.sync.get('sidebarPosition')
     const sidebarPosition = data.sidebarPosition
     let sidebarParentElement = document.body
+    let bottomPanelElement = document.getElementById('roguedex-bottom-panel')
 
     sidebarParentElement.classList.remove('sidebar-Left', 'sidebar-Right', 'sidebar-Top', 'sidebar-Bottom')
     sidebarParentElement.classList.add(`sidebar-${sidebarPosition}`)
+    bottomPanelElement.classList.remove('sidebar-Right', 'sidebar-Left')
+    bottomPanelElement.classList.add(`sidebar-${sidebarPosition}`)
 }
 
 async function toggleSidebarPartyDisplay(partyID, state) {
@@ -826,6 +876,7 @@ async function toggleSidebarPartyDisplay(partyID, state) {
 
 async function initCreation(sessionData) {
     deleteWrapperDivs();
+    //clearSidebar();
     let extensionSettings = await Utils.LocalStorage.getExtensionSettings()
     if (extensionSettings.showEnemies) {
         await dataMapping("enemyParty", "enemies", sessionData);
@@ -846,8 +897,9 @@ async function dataMapping(pokemonLocation, divId, sessionData) {
         let pIndex = determinePage(divId, pokemonData.pokemon);
         await createCardsDiv(divId, pokemonData.pokemon, pIndex).then(() => {
             scaleElements();
-        }); 
+        });
         await updateSidebarCards(divId, sessionData, pokemonData);
+        observeGameCanvasResize();    
     });
 }
 
@@ -949,8 +1001,9 @@ function listenForDataUiModeChange() {
                         if (newValue === "SAVE_SLOT") {
                             Utils.LocalStorage.clearAllSessionData();
                         }
-                        if (newValue === "SAVE_SLOT" || newValue === "TITLE" || newValue === "MODIFIER_SELECT" || newValue === "STARTER_SELECT") {
+                        if (newValue === "SAVE_SLOT" || newValue === "TITLE" || newValue === "MODIFIER_SELECT" || newValue === "STARTER_SELECT") {                            
                             deleteWrapperDivs()
+                            //clearSidebar()
                         }
                     }
                 });
@@ -970,3 +1023,40 @@ function listenForDataUiModeChange() {
 
 listenForDataUiModeChange();
 
+function observeGameCanvasResize() {
+    const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+            //console.log(entry)
+            resizeUIBottomPanel(entry.contentRect.right, entry.contentRect.width, entry.contentRect.height)
+        }      
+        //console.log("Size changed");
+    });
+
+    resizeObserver.observe( document.getElementById('app').getElementsByTagName('canvas')[0] );
+}
+
+function resizeUIBottomPanel(right, width, height) {
+    
+    let panel = document.getElementById('roguedex-bottom-panel')
+    //const gameApp = document.getElementById('app')
+    const sidePanel = document.getElementById('roguedex-sidebar')
+
+    if (typeof panel === "undefined") {
+        return
+    }
+    else {
+        //const gameAppPos = gameApp.getBoundingClientRect();
+        const sidebarPos = sidePanel.getBoundingClientRect();
+
+        let pageWidth = window.innerWidth;
+        let pageHeight = window.innerHeight;
+        /* bottom panel should take up the height that is leftover from the game apps canvas */
+        panel.style['max-height'] = `${pageHeight - Math.round(height)}px`;
+
+        /*  
+            bottom panel should fill out the entire leftover horizontal space,
+            and should therefore be "anchored" to the sidebar.
+        */
+        panel.style['max-width'] = `${pageWidth - sidebarPos.width}px`;
+    }
+}
