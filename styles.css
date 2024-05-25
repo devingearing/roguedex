@@ -51,10 +51,6 @@ body {
 .roguedex-sidebar.hidden {
     display: none;
 }
-.running-status {
-    max-width: 30%;
-    display: flex;
-}
 body.sidebar-Left {
     flex-direction: row;
 }
@@ -76,6 +72,7 @@ body.sidebar-Bottom {
     height: 100%;
     box-sizing: content-box;
     display: none;
+    border-bottom: 1px solid var(--sidebar-borders-color);
 }
 .roguedex-bottom-panel.sidebar-active {
     display: block;
@@ -160,8 +157,12 @@ body.sidebar-Bottom {
 .pokemon-info-text-wrapper {
     display: table-cell;    
     border-bottom: 1px solid var(--sidebar-borders-color);
-    padding: 0.5em 0.5em 0.5em 0;
+    padding: 0.3em 0.5em 0.3em 0;
     vertical-align: top;
+}
+.pokemon-entry .pokemon-entry-image {
+    padding: 0.5em 0;
+    vertical-align: middle;
 }
 .pokemon-entry:last-child.div {
     border-bottom: none;
@@ -213,6 +214,7 @@ body.sidebar-Bottom {
 
     position: relative;
     padding: 0.1em 0.1em 0.1em 0.1em;
+    width: -webkit-fill-available;
 }
 .roguedex-sidebar .pokemon-type-weaknesses {
     background: rgb(36,0,0);
@@ -260,9 +262,11 @@ body.sidebar-Bottom {
     background-color: rgb(68,68,68);
     border: 1px solid rgb(148, 148, 148);
 }
-.roguedex-sidebar .pokemon-entry-image {
+.roguedex-sidebar .pokemon-entry-image canvas {
     max-height: var(--sidebar-img-max-height);
     max-width: var(--sidebar-img-max-height);
+    height: var(--sidebar-img-max-height);
+    width: var(--sidebar-img-max-height);
 }
 .pokemon-info-text-wrapper {    
     padding: 0.2em 0.2m 0.2em 0px !important;
