@@ -118,6 +118,10 @@ body.sidebar-Bottom {
     text-align: center;
     font-family: emerald;
 }
+.roguedex-sidebar .sidebar-header-trainer-battle {
+    color: #ff7e7e;
+    font-size: .8em;
+}
 .enemies-party, .allies-party {
     display: table;
     color: white;
@@ -224,6 +228,7 @@ body.sidebar-Bottom {
     display: flex;
     flex-wrap: wrap;
     min-height: calc(var(--icon-size) * 1);
+    min-width: calc(var(--icon-size) * 3);
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
     border-top-left-radius: 5px;
@@ -232,6 +237,7 @@ body.sidebar-Bottom {
     position: relative;
     padding: 0.1em 0.1em 0.1em 0.1em;
     width: -webkit-fill-available;
+    
 }
 .roguedex-sidebar .pokemon-type-weaknesses {
     background: rgb(36,0,0);
@@ -341,6 +347,25 @@ body.sidebar-Bottom {
     0% {opacity: 0.5;}
     50% {opacity: 1.0;}
     100% {opacity: 0.5;}
+}
+
+/* change view for trainer battles */
+.pokemon-entry.condensed {
+	display: table-cell;
+    border: 1px solid black;
+}
+.pokemon-entry.condensed .pokemon-entry-image {
+    display: block;
+    text-align: center;
+}
+.pokemon-entry.condensed .pokemon-type-effectiveness-wrapper {
+	display: contents;
+}
+.pokemon-entry.condensed .allies-party, .pokemon-entry.condensed .enemies-party {
+	display: flex;
+}
+.pokemon-entry.condensed .pokemon-info-text-wrapper {
+    display: none;
 }
 
 /* sidebar end */

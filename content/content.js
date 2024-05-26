@@ -46,6 +46,11 @@ let wrapperDivPositions = {
     }
 }
 
+let lastPartyHashes = {
+    'enemies': 0,
+    'allies': 0
+}
+
 function createEnemyDiv(showSidebar = false) {
     const enemies = document.createElement("div");
     enemies.className = 'enemy-team'
@@ -698,7 +703,24 @@ function createSidebarTypeEffectivenessWrapper(typeEffectivenesses, typeEffectiv
     Updates party information for both sides (allies, enemies) in the sidebar.    
 */
 async function updateSidebarCards(partyID, sessionData, pokemonData) {
-    const sidebarPartyElement = document.getElementById(`sidebar-${partyID}-box`)    
+    const trainer = sessionData.trainer;
+    const enemyPartySize = sessionData.enemyParty.length;
+    const allyPartySize = sessionData.party.length;
+    const maxPokemonForDetailedView = 8;
+    const isTrainerBattle = (trainer != null);
+    let css_class_condensed = '';
+
+    if ((enemyPartySize + allyPartySize) > maxPokemonForDetailedView) {
+        css_class_condensed = 'condensed';
+    }
+
+    if (weather.type && weather.turnsLeft) {
+        await updateBottomPanel(pokemonData)
+    }
+    
+    await updateSidebarHeader(isTrainerBattle);
+
+    const sidebarPartyElement = document.getElementById(`sidebar-${partyID}-box`)  
     let savedData = Utils.LocalStorage.getPlayerData()
     let dexData = savedData["dexData"]
 
@@ -707,7 +729,7 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
     let partyWrapperHtml = `
         <div class="${partyID}-party">
             ${pokemonData.pokemon.map((pokemon, counter) => `
-                <div class="pokemon-entry" id="sidebar_${partyID}_${counter}">
+                <div class="pokemon-entry ${css_class_condensed}" id="sidebar_${partyID}_${counter}">
                     <div class="pokemon-entry-image">
                         <canvas id="pokemon-icon_sidebar_${partyID}_${counter}" class="pokemon-entry-icon"></canvas>
                     </div>
@@ -749,10 +771,26 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
     pokemonData.pokemon.forEach(function (value, i) {
         getPokemonIcon(value, `sidebar_${partyID}_${i}`)
     })
+}
 
-    if (weather.type && weather.turnsLeft) {
-        await updateBottomPanel(pokemonData)
+async function updateSidebarHeader(isTrainerBattle) {
+    const sidebarHeaderElement = document.getElementById('sidebar-header');
+    sidebarHeaderElement.replaceChildren();
+
+    if (isTrainerBattle) {        
+        let html = `
+            <span>RogueDex</span>
+            <span class=sidebar-header-trainer-battle>(Trainer Battle)</span>
+        `
+        sidebarHeaderElement.insertAdjacentHTML("afterbegin", html)
     }
+    else {        
+        let html = `
+            <span>RogueDex</span>
+        `
+        sidebarHeaderElement.insertAdjacentHTML("afterbegin", html)
+    }
+    return
 }
 
 async function updateBottomPanel(pokemonData) {
@@ -770,7 +808,8 @@ async function updateBottomPanel(pokemonData) {
             </div>
         </div>    
     `
-    bottomPanelElement.insertAdjacentHTML("afterbegin", weatherHtml)
+    bottomPanelElement.insertAdjacentHTML("afterbegin", weatherHtml);
+    return
 }
 
 function deleteAllChildren(element) {
