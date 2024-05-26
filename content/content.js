@@ -328,12 +328,24 @@ async function createPokemonCardDiv(cardId, pokemon) {
     return cardObj
 }
 
-function generateIVsHTML(pokemon, dexIvs){
+function generateIVsHTML(pokemon, dexIvs, simpleDisplay = false, addStyleClasses = false) {
     let fullHTML = ``;
     for (let i in pokemon.ivs) {
         let curIV = pokemon.ivs[i];
-        fullHTML += `<div class="stat-p">${Stat[i]}:&nbsp;<div class="stat-c" style="color: ${getColor(curIV)}">${curIV}${ivComparison(curIV, dexIvs[i])}</div>&nbsp;&nbsp;</div>`;
-        // ivsRow.append(statDiv);
+
+        if (simpleDisplay === true && addStyleClasses === false) {
+            // skip the colors and indicators for whether the ivs would be an upgrade for your own starters
+            fullHTML += `<div class="stat-p">${Stat[i]}:&nbsp;<div class="stat-c">${curIV}</div>&nbsp;&nbsp;</div>`;    
+        } else if (simpleDisplay === true && addStyleClasses === true) {
+            // skip the color gradients and indicators, but add css-classes to style the descriptors and values differently
+            fullHTML += `<div class="stat-p stat-p-colors">${Stat[i]}:&nbsp;<div class="stat-c stat-c-colors">${curIV}</div>&nbsp;&nbsp;</div>`;    
+        } else if (simpleDisplay === false && addStyleClasses === true) {
+            // don't skip the color gradients and indicators, but add css-classes to style the descriptors and values differently anyways
+            fullHTML += `<div class="stat-p stat-p-colors">${Stat[i]}:&nbsp;<div class="stat-c stat-c-colors">${curIV}</div>&nbsp;&nbsp;</div>`;    
+        } else {
+            // add (hardcode) color gradients and icons
+            fullHTML += `<div class="stat-p">${Stat[i]}:&nbsp;<div class="stat-c" style="color: ${getColor(curIV)}">${curIV}${ivComparison(curIV, dexIvs[i])}</div>&nbsp;&nbsp;</div>`;
+        }
     }
     return fullHTML;
 }
@@ -705,18 +717,27 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
                     <div class="pokemon-info-text-wrapper">
                         <div class="pokemon-ability-nature">
                             <span class="pokemon-ability tooltip ${pokemon.ability.isHidden ? 'hidden-ability' : ''}">
-                                Ability: ${pokemon.ability.name} 
+                                <span class="pokemon-ability-description">
+                                    Ability:
+                                </span>
+                                <span class="pokemon-ability-value">
+                                    ${pokemon.ability.name}
+                                </span>
                                 ${createTooltipDiv(pokemon.ability.description)}
-                            </span>
-                            &nbsp-&nbsp
+                            </span>                            
                             <span class="pokemon-nature tooltip">
-                                Nature: ${pokemon.nature}
+                                <span class="pokemon-nature-description">
+                                    Nature:
+                                </span>
+                                <span class="pokemon-nature-value">
+                                    ${pokemon.nature}
+                                </span>
                                 ${createTooltipDiv("")}
                             </span>
                         </div>                       
                         
                         <div class="pokemon-ivs stat-cont">
-                            ${generateIVsHTML(pokemon, dexData[pokemon.baseId]["ivs"])}
+                            ${partyID == 'allies' ? generateIVsHTML(pokemon, dexData[pokemon.baseId]["ivs"], true, true) : generateIVsHTML(pokemon, dexData[pokemon.baseId]["ivs"])}
                         </div>
                     </div>
                 </div>
