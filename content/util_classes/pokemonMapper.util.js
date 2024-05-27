@@ -430,8 +430,7 @@ class PokemonMapperClass{
             console.log(pokemonId)
             //const pokemonId = $this.I2P[$this.convertPokemonId(pokemon.species)].toLocaleLowerCase();
             const moveset = await PokemonMapperClass.#getPokemonTypeMoveset($this.MoveList, pokemonId, pokemon.moveset);
-            const typeEffectiveness = await PokemonMapperClass.#getPokemonTypeEffectiveness($this, pokemonId);
-            const typeEffectivenessDetailed = await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, pokemonId);
+            const typeEffectiveness = await PokemonMapperClass.#getFullTypeEffectivenessAllCases($this, pokemonId, fusionId);
             let basePokemon = $this.findBasePokemon($this.I2P[pokemon.species]);
             let name = $this.getPokemonName(pokemon);
             return {
