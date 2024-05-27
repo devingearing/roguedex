@@ -551,10 +551,16 @@ class PokemonMapperClass{
             if (pokemonSpeciesID > 2018) {
                 // turns something like GALAR_FARFETCHD into FARFETCHD-GALAR, which is the correct pokemon identifier used by pokeapi
                 const splits = pokemonIdentifier.split('_');
-                return splits[1] + '-' + splits[0];
+                let newIdentifier = '';
+                for (let i in splits) {
+                    if (i > 0) {
+                        newIdentifier += splits[i] + '-';
+                    }
+                }
+                return newIdentifier + splits[0];
             } else {
                 return pokemonIdentifier
-            }
+            }            
         }
         else{
             return null;
