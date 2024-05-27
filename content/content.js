@@ -334,9 +334,21 @@ async function createPokemonCardDiv(cardId, pokemon) {
 }
 
 function generateMovesetHTML(pokemon) {
-    let fullHTML = ``;
-    
-    return fullHTML;
+    let html = '';    
+    for (let i in pokemon.moveset) {
+        let move = pokemon.moveset[i];
+        html += `
+            <div class="tooltip">
+                <div class="pokemon-move">
+                    <span class="pokemon-move-name">${move.name}</span>
+                    <span class="pokemon-move-type">${move.type}</span>
+                </div>                
+                ${createTooltipDiv(`Category: ${move.category}<br>Power: ${move.name}<br>maxPP: ${move.maxPP}<br>Accuracy: ${move.accuracy}`)}
+            </div>            
+        `
+    }
+
+    return html;
 }
 
 function generateIVsHTML(pokemon, dexIvs, simpleDisplay = false, addStyleClasses = false) {
@@ -743,12 +755,14 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
                 <div class="pokemon-entry ${css_class_condensed}" id="sidebar_${partyID}_${counter}">
                     <div class="pokemon-entry-image">
                         <canvas id="pokemon-icon_sidebar_${partyID}_${counter}" class="pokemon-entry-icon"></canvas>
-                        <div class="sidebar-pokemon-info tooltip">
-                            <span class="sidebar-pokemon-level ">Lvl. ${pokemon.level}</span>
-                            <span class="sidebar-pokemon-shiny ">${pokemon.shiny ? '☀' : ''}</span>
-                            <span class="sidebar-pokemon-luck ">☘ ${pokemon.luck}</span>
-                            ${createTooltipDiv(`Pokemons current level: ${pokemon.level}.\nIs a shiny: ${pokemon.level}.\nPokemon luck (from shiny): ${pokemon.luck}.`)}
+
+                        <div class="sidebar-pokemon-info tooltip" style="position: absolute; ${partyID == 'enemies' ? 'display: none;' : ''}">
+                            <span class="sidebar-pokemon-level">Lvl. ${pokemon.level}</span>
+                            <span class="sidebar-pokemon-shiny">${pokemon.shiny ? '☀' : ''}</span>
+                            <span class="sidebar-pokemon-luck">☘ ${pokemon.luck}</span>
+                            ${createTooltipDiv(`Pokemons current level: ${pokemon.level}.<br>Is shiny: ${pokemon.shiny ? 'Yes' : 'No'}.<br>Pokemon luck (shiny bonus): ${pokemon.luck}.`)}
                         </div>
+
                     </div>
                     <div class="pokemon-type-effectiveness-wrapper">
                         ${createSidebarTypeEffectivenessWrapper(pokemon.typeEffectiveness, pokemon.typeEffectivenessDetailed)}
@@ -778,8 +792,9 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
                             ${partyID == 'allies' ? generateIVsHTML(pokemon, dexData[pokemon.baseId]["ivs"], true, true) : generateIVsHTML(pokemon, dexData[pokemon.baseId]["ivs"])}
                         </div>                       
                         
-                        ${partyID == 'allies' ? generateMovesetHTML() : ''}                        
-
+                        <div class="pokemon-moveset-wrapper">
+                            ${partyID == 'allies' ? generateMovesetHTML(pokemon) : ''}                
+                        </div>
                     </div>
                 </div>
             `).join('')}
@@ -816,41 +831,36 @@ async function updateSidebarHeader(isTrainerBattle) {
 async function updateBottomPanel(partyID, pokemonData) {
     const bottomPanelElement = document.getElementById(`roguedex-bottom-panel`)
     bottomPanelElement.replaceChildren();
-
     
     let weatherHtml = '';
     if (pokemonData.weather.type && pokemonData.weather.turnsLeft) {
         weatherHtml = `
-            <div class="roguedex-bottom-panel-content">
-                <div class="roguedex-bottom-panel-header">RogueDex Bottom Panel</div>
-                <div class="roguedex-bottom-panel-weather-box">
-                    <div class="text-base">
-                        Weather: ${weather.type}, Turns Left: ${weather.turnsLeft}
-                    </div>
+            <div class="bottom-panel-weather-box">
+                <div class="text-base">
+                    <span>Weather: ${weather.type}, Turns Left: ${weather.turnsLeft}</span>
                 </div>
-            </div>    
+            </div>         
         `
     } else {
         // delete existing weather div
     }
     
-    /* Calculate the allies party total luck (from shinies). */
-    
+    /* Calculate the allies party total luck (from shinies). */    
     let luckTotal = 0;
     if (partyID == 'allies') {        
         pokemonData.pokemon.forEach(function (value, i) {
             luckTotal += value.luck;
         })
-        //document.getElementById(`sidebar-${partyID}-party-info`).innerHTML = `Party Luck: ${luckTotal}`;
     }
-    let luckHtml = `<div class="bottom-panel-party-luck">Total Party Luck (from shinies): ${luckTotal}.</div>`;
+    let luckHtml = `<div class="bottom-panel-party-luck"><span>Total Party Luck (from shinies): ${luckTotal}.</span></div>`;
     
-    let html = `<div class="roguedex-bottom-panel-content">
-                    <div class="roguedex-bottom-panel-header">RogueDex Bottom Panel</div>
-                    ${weatherHtml}
-                    ${luckHtml}
-                </div>
-            `    
+    let html = `
+        <div class="roguedex-bottom-panel-content">
+            <div class="roguedex-bottom-panel-header">RogueDex Bottom Panel</div>
+            ${weatherHtml}
+            ${luckHtml}
+        </div>
+    `    
     bottomPanelElement.insertAdjacentHTML("afterbegin", html);
     return
 }

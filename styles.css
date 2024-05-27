@@ -32,7 +32,6 @@
 /* pokerogue overwrites  */
 body {
     display: flex;
-    overflow-y: hidden;
 }
 #app {
     display: block;
@@ -80,33 +79,6 @@ body.sidebar-Top {
 }
 body.sidebar-Bottom {
     flex-direction: column-reverse;
-}
-.roguedex-bottom-panel {    
-    bottom: 0;
-    position: absolute;
-    z-index: -1;
-    background-color: var(--sidebar-bg-color);
-    width: 100%;
-    height: 100%;
-    box-sizing: content-box;
-    display: none;
-    border-bottom: 1px solid var(--sidebar-borders-color);
-}
-.roguedex-bottom-panel.sidebar-active {
-    display: block;
-}
-.roguedex-bottom-panel.sidebar-Left {    
-    right: 0;
-}
-.roguedex-bottom-panel.sidebar-Right {
-    left: 0;    
-}
-.roguedex-bottom-panel-content {
-    padding: 0.5em;
-    height: -webkit-fill-available;
-    color: white;
-    font-family: 'emerald';
-    font-size: 1em;
 }
 .running-status.sidebar-active {
     display: none;
@@ -191,10 +163,15 @@ body.sidebar-Bottom {
     display: block;
     position: absolute;
     left: 0;
-    bottom: 0;
+    top: 0;
     padding-left: 0.5em;
 }
-
+.sidebar-pokemon-info .tooltip {
+    padding: 0.3em 0.4em 0.3em 0.4em;
+    font-size: 1.3em;
+    text-align: left;
+    min-width: 200px;
+}
 .pokemon-entry:last-child.div {
     border-bottom: none;
 }
@@ -358,6 +335,9 @@ body.sidebar-Bottom {
     50% {opacity: 1.0;}
     100% {opacity: 0.5;}
 }
+.roguedex-sidebar .pokemon-moveset-wrapper {
+    display: none;
+}
 
 /* change view for trainer battles */
 .pokemon-entry.condensed {
@@ -381,6 +361,47 @@ body.sidebar-Bottom {
 /* sidebar end */
 
 
+/* bottom panel */
+
+.roguedex-bottom-panel {
+    font-size: 1.5em;  
+    bottom: 0;
+    position: absolute;
+    z-index: -1;
+    background-color: var(--sidebar-bg-color);
+    width: 100%;
+    height: 100%;
+    box-sizing: content-box;
+    display: none;
+    border-bottom: 1px solid var(--sidebar-borders-color);
+}
+.roguedex-bottom-panel.sidebar-active {
+    display: block;
+}
+.roguedex-bottom-panel.sidebar-Left {    
+    right: 0;
+}
+.roguedex-bottom-panel.sidebar-Right {
+    left: 0;    
+}
+.roguedex-bottom-panel-content {
+    padding: 0.5em;
+    height: -webkit-fill-available;
+    color: white;
+    font-family: 'emerald';
+    font-size: 1em;
+}
+.roguedex-bottom-panel-header {
+    font-size: 1em;
+}
+.bottom-panel-weather-box {
+    margin: 0.5em;
+}
+.bottom-panel-party-luck {
+    margin: 0.5em;
+}
+
+/* bottom panel end */
 
 
 .allies-team {
