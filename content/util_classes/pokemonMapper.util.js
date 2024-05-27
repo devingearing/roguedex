@@ -128,10 +128,16 @@ class PokemonMapperClass{
         return {}
     }
 
-    static async #getPokemonTypeEffectivenessDetailed($this, id) {
-        const types = await PokemonMapperClass.#getPokeType(id);
+    static async #getPokemonTypeEffectivenessDetailed($this, id, typeOverload) {
+        let types;
+        if (!typeOverload) {
+         types = await PokemonMapperClass.#getPokeType(id);
+        }
+        else{
+            types = typeOverload;
+        }
         // ignore single type pokemon
-        if (types && (types[1] !== 'undefined')) {
+        if (types.length > 1) {
             const { weaknesses, resistances, immunities, cssClasses } = await PokemonMapperClass.#calculateTypeEffectivenessDetailed($this, types);            
             return {
                 'weaknesses': weaknesses,
@@ -139,9 +145,17 @@ class PokemonMapperClass{
                 'immunities': immunities,
                 'cssClasses' : cssClasses
             }
-        } 
+        }
         else {
-            return { weaknesses : {}, resistances : {}, immunities : {} , cssClasses : {} }
+            const { weaknesses, resistances, immunities } = await PokemonMapperClass.#calculateTypeEffectiveness($this, types);
+            console.log("single type");
+            console.log(weaknesses, resistances, immunities);
+            return {
+                'weaknesses': {normal: [...weaknesses]},
+                'resistances': {normal: [...resistances]},
+                'immunities': {normal: [...immunities]},
+                'cssClasses' : {}
+            }
         }
         return { }
     }
@@ -229,6 +243,8 @@ class PokemonMapperClass{
 
             // at least 1 type is immune => immune
             if (defenderType_1 == 0 || defenderType_2 == 0) {
+                console.log("AT");
+                console.log(attackerType);
                 immunities.normal.push(attackerType)
                 cssClasses[attackerType] = 'no-dmg'
                 return
@@ -262,6 +278,8 @@ class PokemonMapperClass{
                 cssClasses[attackerType] = 'super-resist'
             }
         });
+
+
 
         return { weaknesses, resistances, immunities, cssClasses };    
     }
@@ -365,6 +383,33 @@ class PokemonMapperClass{
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
+    static async #getFullTypeEffectivenessAllCases($this, pokemonName, fusionName){
+        if(!fusionName){
+            return await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, pokemonName);
+        }
+        else{
+            const baseTypes = await PokemonMapperClass.#getPokeType(pokemonName);
+            const fusionTypes = await PokemonMapperClass.#getPokeType(fusionName);
+            let finalType = [];
+            finalType.push(baseTypes[0]);
+            if(fusionTypes.length > 1) {
+                if(fusionTypes[1] !== finalType[0]) {
+                    finalType.push(fusionTypes[1]);
+                }
+                else{
+                    finalType.push(fusionTypes[0]);
+                }
+            }
+            else{
+                if(fusionTypes[0] !== finalType[0]) {
+                    finalType.push(fusionTypes[0]);
+                }
+            }
+            console.log(finalType);
+            return await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, null, finalType)
+        }
+    }
+
     async getPokemonArray(pokemonData, arena) {
         let $this = this;
         let pokemonArray = PokemonMapperClass.#mapPartyToPokemonArray(pokemonData);
@@ -381,7 +426,8 @@ class PokemonMapperClass{
 
         const pokemonPromises = pokemonArray.map(async (pokemon) => {
             const pokemonId = $this.fixVariantPokemonNames($this.I2P, pokemon.species).toLocaleLowerCase();
-            //console.log(pokemonId)
+            const fusionId = $this.fixVariantPokemonNames($this.I2P, pokemon.fusionSpecies)?.toLocaleLowerCase();
+            console.log(pokemonId)
             //const pokemonId = $this.I2P[$this.convertPokemonId(pokemon.species)].toLocaleLowerCase();
             const moveset = await PokemonMapperClass.#getPokemonTypeMoveset($this.MoveList, pokemonId, pokemon.moveset);
             const typeEffectiveness = await PokemonMapperClass.#getPokemonTypeEffectiveness($this, pokemonId);
@@ -392,15 +438,10 @@ class PokemonMapperClass{
                 id: $this.convertPokemonId(pokemon.species),
                 name: $this.capitalizeFirstLetter(name.toUpperCase()),
                 typeEffectiveness: {
-                    weaknesses: Array.from(typeEffectiveness.weaknesses),
-                    resistances: Array.from(typeEffectiveness.resistances),
-                    immunities: Array.from(typeEffectiveness.immunities),
-                },
-                typeEffectivenessDetailed: {
-                    weaknesses: typeEffectivenessDetailed.weaknesses,
-                    resistances: typeEffectivenessDetailed.resistances,
-                    immunities: typeEffectivenessDetailed.immunities,
-                    cssClasses: typeEffectivenessDetailed.cssClasses,
+                    weaknesses: typeEffectiveness.weaknesses,
+                    resistances: typeEffectiveness.resistances,
+                    immunities: typeEffectiveness.immunities,
+                    cssClasses: typeEffectiveness.cssClasses,
                 },
                 ivs: pokemon.ivs,
                 ability: await $this.getPokemonAbility(pokemon.species, pokemon.abilityIndex, pokemon.fusionSpecies, pokemon.fusionAbilityIndex),
@@ -505,15 +546,19 @@ class PokemonMapperClass{
         So for anything that needs a pokemon identifier like 'farfetched-galar' or 'farfetched' instead of the 
         converted ID (number), this is a quick workaround.
         */
-        const pokemonIdentifier = I2P[pokemonSpeciesID];
+        if(pokemonSpeciesID) {
+            const pokemonIdentifier = I2P[pokemonSpeciesID];
 
-        if (pokemonSpeciesID > 2018) {
-            // turns something like GALAR_FARFETCHD into FARFETCHD-GALAR, which is the correct pokemon identifier used by pokeapi
-            const splits = pokemonIdentifier.split('_');
-            return splits[1] + '-' + splits[0];
+            if (pokemonSpeciesID > 2018) {
+                // turns something like GALAR_FARFETCHD into FARFETCHD-GALAR, which is the correct pokemon identifier used by pokeapi
+                const splits = pokemonIdentifier.split('_');
+                return splits[1] + '-' + splits[0];
+            } else {
+                return pokemonIdentifier
+            }
         }
-        else {
-            return pokemonIdentifier
+        else{
+            return null;
         }
     }
 

@@ -164,40 +164,50 @@ function createTooltipDiv(tip) {
 }
 
 // Current values: weaknesses, resistances, immunities
-function createTypeEffectivenessWrapper(typeEffectivenesses, typeEffectivenessDetailed = {}) {
+function createTypeEffectivenessWrapper(typeEffectivenesses) {
     let typesHTML = `
-		${Object.keys(typeEffectivenesses).map((effectiveness) => {
-        if (typeEffectivenesses[effectiveness].length === 0) return ''
+        ${Object.keys(typeEffectivenesses).map((effectiveness) => {
+        const effectivenessObj = typeEffectivenesses[effectiveness];
+        console.log(typeEffectivenesses);
+        if (!effectivenessObj || (!effectivenessObj.normal?.length && !effectivenessObj.double?.length)) return '';
+
         const tooltipMap = {
             weaknesses: "Weak to",
             resistances: "Resists",
             immunities: "Immune to"
         };
+
+        const allTypes = [
+            ...(effectivenessObj.normal || []),
+            ...(effectivenessObj.double || [])
+        ];
+
         return `
-	      <div class="pokemon-${effectiveness} tooltip">
+          <div class="pokemon-${effectiveness} tooltip">
+              ${allTypes.map((type, counter) => {
+            const cssClass = getTypeEffectivenessCssClass(type, typeEffectivenesses);
+            if (effectiveness === "cssClasses") {
+                return ''; // Skip if effectiveness is not equal to cssClass
+            }
+            return `
+                      ${/* The current html structure requires to wrap every third element in a div, the implementation here gets a bit ugly. */''}
+                      ${(counter % 3 === 0) ? `<div>` : ''}
 
-	          ${typeEffectivenesses[effectiveness].map((type, counter) => `
-                  
-	              ${/* The current html structure requires to wrap every third element in a div, the implementation here gets a bit ugly. */''}
-	              ${((counter + 1) % 3 === 1) ?
-            `<div>`
-            : ''}
+                      <div class="type-icon ${cssClass}" 
+                          style="background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/sword-shield/${Types[type]}.png')"></div>
+                      
+                      ${/* Closing div, after every third element or when the arrays max length is reached. */''}
+                      ${((counter + 1) % 3 === 0) || ((counter + 1) === allTypes.length) ? `</div>` : ''}
+                  `;
+        }).join('')}
+              ${createTooltipDiv(tooltipMap[effectiveness] || "")}
+          </div>
+       `;
+    }).join('')}`;
 
-	              <div class="type-icon ${getTypeEffectivenessCssClass(type, typeEffectivenessDetailed)} " 
-                  style="background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/sword-shield/${Types[type]}.png')"></div>
-	              
-	              ${/* Closing div, after every third element or when the arrays max length is reached. */''}
-	              ${((counter + 1) % 3 === 0) || ((counter + 1) === typeEffectivenesses[effectiveness].length) ?
-            `</div>`
-            : ''}
-	          `).join('')}
-	          ${createTooltipDiv(tooltipMap[effectiveness] || "")}
-	      </div>
-	   `
-    }).join('')}
-  `
-    return typesHTML
+    return typesHTML;
 }
+
 
 function getTypeEffectivenessCssClass(type, typeEffectivenessDetailed) {
     try {
@@ -227,7 +237,7 @@ let weather = {};
 
 function createArrowButtonsDiv(divId, upString, downString, showMinified) {
     let sizes = "2.5em !important"
-    if(showMinified){
+    if (showMinified) {
         sizes = "1em !important"
     }
     let result = {};
@@ -289,7 +299,7 @@ async function createPokemonCardDiv(cardId, pokemon) {
     // getPokemonIcon(pokemon);
     let pokemonImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
     const opacitySlider = createOpacitySliderDiv(cardId, wrapperDivPositions[cardId].opacity, opacityRangeMin, opacityRangeMax);
-    const typeEffectivenessHTML = createTypeEffectivenessWrapper(pokemon.typeEffectiveness, pokemon.typeEffectivenessDetailed);
+    const typeEffectivenessHTML = createTypeEffectivenessWrapper(pokemon.typeEffectiveness);
     let cardHTML = `
   	<div class="pokemon-cards">
 	    <div class="pokemon-card">
@@ -358,13 +368,13 @@ function generateIVsHTML(pokemon, dexIvs, simpleDisplay = false, addStyleClasses
 
         if (simpleDisplay === true && addStyleClasses === false) {
             // skip the colors and indicators for whether the ivs would be an upgrade for your own starters
-            fullHTML += `<div class="stat-p">${Stat[i]}:&nbsp;<div class="stat-c">${curIV}</div>&nbsp;&nbsp;</div>`;    
+            fullHTML += `<div class="stat-p">${Stat[i]}:&nbsp;<div class="stat-c">${curIV}</div>&nbsp;&nbsp;</div>`;
         } else if (simpleDisplay === true && addStyleClasses === true) {
             // skip the color gradients and indicators, but add css-classes to style the descriptors and values differently
-            fullHTML += `<div class="stat-p stat-p-colors">${Stat[i]}:&nbsp;<div class="stat-c stat-c-colors">${curIV}</div>&nbsp;&nbsp;</div>`;    
+            fullHTML += `<div class="stat-p stat-p-colors">${Stat[i]}:&nbsp;<div class="stat-c stat-c-colors">${curIV}</div>&nbsp;&nbsp;</div>`;
         } else if (simpleDisplay === false && addStyleClasses === true) {
             // don't skip the color gradients and indicators, but add css-classes to style the descriptors and values differently anyways
-            fullHTML += `<div class="stat-p stat-p-colors">${Stat[i]}:&nbsp;<div class="stat-c stat-c-colors">${curIV}</div>&nbsp;&nbsp;</div>`;    
+            fullHTML += `<div class="stat-p stat-p-colors">${Stat[i]}:&nbsp;<div class="stat-c stat-c-colors">${curIV}</div>&nbsp;&nbsp;</div>`;
         } else {
             // add (hardcode) color gradients and icons
             fullHTML += `<div class="stat-p">${Stat[i]}:&nbsp;<div class="stat-c" style="color: ${getColor(curIV)}">${curIV}${ivComparison(curIV, dexIvs[i])}</div>&nbsp;&nbsp;</div>`;
@@ -376,15 +386,13 @@ function generateIVsHTML(pokemon, dexIvs, simpleDisplay = false, addStyleClasses
 function ivComparison(pokeIv, dexIv) {
     let iconA = "";
     let colorS = "#00FF00";
-    if(pokeIv > dexIv){
+    if (pokeIv > dexIv) {
         iconA = "↑";
         colorS = "#00FF00";
-    }
-    else if (pokeIv < dexIv) {
+    } else if (pokeIv < dexIv) {
         iconA = "↓";
         colorS = "#FF0000";
-    }
-    else{
+    } else {
         iconA = "-";
         colorS = "#FFFF00";
     }
@@ -393,8 +401,8 @@ function ivComparison(pokeIv, dexIv) {
 }
 
 const imageCache = {};
-
 async function getPokemonIcon(pokemon, divId) {
+    const DISABLE_FUN_FUSION = true;
     const cacheKey = pokemon.fusionId ? `${pokemon.name}-${pokemon.fusionId}` : pokemon.name;
     console.time(`getPokemonIcon_${cacheKey}`); // Start the timer
 
@@ -462,71 +470,6 @@ async function getPokemonIcon(pokemon, divId) {
 
         const cachedImage = imageCache[cacheKey] || Utils.LocalStorage.getImageFromCache(cacheKey);
 
-        if (cachedImage) {
-            console.log('Using cached image');
-
-            const blobUrl = cachedImage;
-            imageCache[cacheKey] = blobUrl; // Save to memory cache if loaded from local storage
-            loadImageFromBlobUrl(image1, blobUrl).then(() => {
-                if (pokemon.fusionId) {
-                    loadImageFromBlobUrl(image2, blobUrl).then(drawCombinedImages).catch(error => console.error(error));
-                } else {
-                    drawSingleImage(image1);
-                }
-                console.timeEnd(`getPokemonIcon_${cacheKey}`); // End the timer
-            }).catch(error => console.error(error));
-        } else {
-            if (pokemon.fusionId) {
-                const fusionName = Utils.PokeMapper.capitalizeFirstLetter(Utils.PokeMapper.I2P[pokemon.fusionId]);
-                const pokeName = Utils.PokeMapper.capitalizeFirstLetter(Utils.PokeMapper.I2P[pokemon.id]);
-
-                chrome.runtime.sendMessage({
-                    action: "fetchFusionImageHtml",
-                    fusionId: fusionName,
-                    pokemonId: pokeName
-                }, response => {
-                    if (response.success) {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(response.html, 'text/html');
-                        const figure = doc.querySelector('figure.sprite.sprite-variant-main');
-                        if (figure) {
-                            const img = figure.querySelector('img');
-                            if (img) {
-                                chrome.runtime.sendMessage({
-                                    action: "fetchImage",
-                                    url: img.src
-                                }, imageResponse => {
-                                    if (imageResponse.success) {
-                                        const blobUrl = imageResponse.dataUrl;
-                                        imageCache[cacheKey] = blobUrl; // Save Blob URL to memory cache
-                                        Utils.LocalStorage.saveImageToCache(cacheKey, blobUrl); // Save to local storage
-                                        loadImageFromBlobUrl(fusionImage, blobUrl)
-                                            .then(() => {
-                                                drawSingleImage(fusionImage);
-                                                console.timeEnd(`getPokemonIcon_${cacheKey}`); // End the timer
-                                            })
-                                            .catch(error => console.error(error));
-                                    } else {
-                                        console.error('Failed to fetch fusion image:', imageResponse.error);
-                                        fallbackToSeparateImages();
-                                    }
-                                });
-                                return;
-                            }
-                        }
-                    }
-                    fallbackToSeparateImages();
-                });
-            } else {
-                fetchImageAndCache(image1Src, cacheKey, image1)
-                    .then(() => {
-                        drawSingleImage(image1);
-                        console.timeEnd(`getPokemonIcon_${cacheKey}`); // End the timer
-                    })
-                    .catch(error => console.error(error));
-            }
-        }
-
         const fallbackToSeparateImages = () => {
             Promise.all([
                 fetchImageAndCache(image1Src, `${pokemon.name}-1`, image1),
@@ -549,12 +492,82 @@ async function getPokemonIcon(pokemon, divId) {
                 })
                 .catch(error => console.error(error));
         };
+
+        if (cachedImage) {
+            console.log('Using cached image');
+
+            const blobUrl = cachedImage;
+            imageCache[cacheKey] = blobUrl; // Save to memory cache if loaded from local storage
+            loadImageFromBlobUrl(image1, blobUrl).then(() => {
+                if (pokemon.fusionId) {
+                    loadImageFromBlobUrl(image2, blobUrl).then(drawCombinedImages).catch(error => console.error(error));
+                } else {
+                    drawSingleImage(image1);
+                }
+                console.timeEnd(`getPokemonIcon_${cacheKey}`); // End the timer
+            }).catch(error => console.error(error));
+        } else {
+            if (pokemon.fusionId) {
+                if (!DISABLE_FUN_FUSION) {
+                    const fusionName = Utils.PokeMapper.capitalizeFirstLetter(Utils.PokeMapper.I2P[pokemon.fusionId]);
+                    const pokeName = Utils.PokeMapper.capitalizeFirstLetter(Utils.PokeMapper.I2P[pokemon.id]);
+
+                    chrome.runtime.sendMessage({
+                        action: "fetchFusionImageHtml",
+                        fusionId: fusionName,
+                        pokemonId: pokeName
+                    }, response => {
+                        if (response.success) {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(response.html, 'text/html');
+                            const figure = doc.querySelector('figure.sprite.sprite-variant-main');
+                            if (figure) {
+                                const img = figure.querySelector('img');
+                                if (img) {
+                                    chrome.runtime.sendMessage({
+                                        action: "fetchImage",
+                                        url: img.src
+                                    }, imageResponse => {
+                                        if (imageResponse.success) {
+                                            const blobUrl = imageResponse.dataUrl;
+                                            imageCache[cacheKey] = blobUrl; // Save Blob URL to memory cache
+                                            Utils.LocalStorage.saveImageToCache(cacheKey, blobUrl); // Save to local storage
+                                            loadImageFromBlobUrl(fusionImage, blobUrl)
+                                                .then(() => {
+                                                    drawSingleImage(fusionImage);
+                                                    console.timeEnd(`getPokemonIcon_${cacheKey}`); // End the timer
+                                                })
+                                                .catch(error => console.error(error));
+                                        } else {
+                                            console.error('Failed to fetch fusion image:', imageResponse.error);
+                                            fallbackToSeparateImages();
+                                        }
+                                    });
+                                    return;
+                                }
+                            }
+                        }
+                        fallbackToSeparateImages();
+                    });
+                } else {
+                    fallbackToSeparateImages();
+                }
+            } else {
+                fetchImageAndCache(image1Src, cacheKey, image1)
+                    .then(() => {
+                        drawSingleImage(image1);
+                        console.timeEnd(`getPokemonIcon_${cacheKey}`); // End the timer
+                    })
+                    .catch(error => console.error(error));
+            }
+        }
     }
     console.log(pokemon);
 }
 
+
 async function createPokemonCardDiv_minified(cardId, pokemon) {
-    let savedData =  Utils.LocalStorage.getPlayerData();
+    let savedData = Utils.LocalStorage.getPlayerData();
     let dexData = savedData["dexData"];
     let dexIvs = dexData[pokemon.baseId]["ivs"];
     console.log(savedData);
@@ -562,7 +575,7 @@ async function createPokemonCardDiv_minified(cardId, pokemon) {
     let opacityRangeMax = 100;
     let pokemonImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
     const opacitySlider = createOpacitySliderDiv(cardId, wrapperDivPositions[cardId].opacity, opacityRangeMin, opacityRangeMax);
-    const typeEffectivenessHTML = createTypeEffectivenessWrapper(pokemon.typeEffectiveness, pokemon.typeEffectivenessDetailed);
+    const typeEffectivenessHTML = createTypeEffectivenessWrapper(pokemon.typeEffectiveness);
     let ivsGeneratedHTML = generateIVsHTML(pokemon, dexIvs);
     //${opacitySlider.html}
     // <div style="display: flex;">
@@ -644,11 +657,10 @@ function getColor(num) {
 }
 
 
-async function chooseCardType(divId, pokemon, minified){
-    if(minified){
+async function chooseCardType(divId, pokemon, minified) {
+    if (minified) {
         return cardsObj = await createPokemonCardDiv_minified(divId, pokemon);
-    }
-    else{
+    } else {
         return cardsObj = await createPokemonCardDiv(divId, pokemon);
     }
 }
@@ -658,7 +670,7 @@ async function createCardsDiv(divId, pokemonData, pokemonIndex) {
     let extensionSettings = await Utils.LocalStorage.getExtensionSettings();
     let newDiv = createWrapperDiv(divId, extensionSettings.showSidebar);
 
-    return await chooseCardType(divId, pokemon, extensionSettings.showMinified).then(async (cardObj) =>{
+    return await chooseCardType(divId, pokemon, extensionSettings.showMinified).then(async (cardObj) => {
         const buttonsObj = createArrowButtonsDiv(divId, "↑", "↓", extensionSettings.showMinified);
         const cardsHTML = `
     	   ${buttonsObj.html}
@@ -668,14 +680,14 @@ async function createCardsDiv(divId, pokemonData, pokemonIndex) {
         document.body.append(newDiv);
         getPokemonIcon(pokemon, divId);
 
-        if(cardObj.slider) {
-           document.getElementById(cardObj.slider).addEventListener('input', changeOpacity)
+        if (cardObj.slider) {
+            document.getElementById(cardObj.slider).addEventListener('input', changeOpacity)
         }
-        document.getElementById(buttonsObj.idUp).addEventListener('click', (event)=>{
-           changePage(event);
+        document.getElementById(buttonsObj.idUp).addEventListener('click', (event) => {
+            changePage(event);
         })
-        document.getElementById(buttonsObj.idDown).addEventListener('click', (event)=>{
-           changePage(event);
+        document.getElementById(buttonsObj.idDown).addEventListener('click', (event) => {
+            changePage(event);
         })
         return newDiv
     })
@@ -701,20 +713,30 @@ function createSidebar() {
     document.body.insertAdjacentHTML("beforeend", bottomPanelHtml)
 }
 
-function createSidebarTypeEffectivenessWrapper(typeEffectivenesses, typeEffectivenessDetailed = {}) {
+function createSidebarTypeEffectivenessWrapper(typeEffectivenesses) {
     let typesHTML = `
-		${Object.keys(typeEffectivenesses).map((effectiveness) => {
-        if (typeEffectivenesses[effectiveness].length === 0) return ''
-        
+        ${Object.keys(typeEffectivenesses).map((effectiveness) => {
+        const effectivenessObj = typeEffectivenesses[effectiveness];
+        if (!effectivenessObj || (!effectivenessObj.normal?.length && !effectivenessObj.double?.length)) return '';
+        if (effectiveness === "cssClasses") {
+            return ''; // Skip if effectiveness is not equal to cssClass
+        }
+
+        const allTypes = [
+            ...(effectivenessObj.normal || []),
+            ...(effectivenessObj.double || [])
+        ];
+
         return `
-	        <div class="pokemon-type-effectiveness-category pokemon-type-${effectiveness}">
-	            ${typeEffectivenesses[effectiveness].map((type, counter) => `                    
-                    <div class="pokemon-type-icon ${getTypeEffectivenessCssClass(type, typeEffectivenessDetailed)}" style="background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/sword-shield/${Types[type]}.png')"></div>
-	            `).join('')}	          
-	        </div>
-	    `}).join('')}
-    `
-    return typesHTML
+            <div class="pokemon-type-effectiveness-category pokemon-type-${effectiveness}">
+                ${allTypes.map((type, counter) => `
+                    <div class="pokemon-type-icon ${getTypeEffectivenessCssClass(type, typeEffectivenesses)}" style="background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/sword-shield/${Types[type]}.png')"></div>
+                `).join('')}
+            </div>
+        `;
+    }).join('')}`;
+
+    return typesHTML;
 }
 
 /*
@@ -765,7 +787,7 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
 
                     </div>
                     <div class="pokemon-type-effectiveness-wrapper">
-                        ${createSidebarTypeEffectivenessWrapper(pokemon.typeEffectiveness, pokemon.typeEffectivenessDetailed)}
+                        ${createSidebarTypeEffectivenessWrapper(pokemon.typeEffectiveness)}
                     </div>
                     <div class="pokemon-info-text-wrapper">
                         <div class="pokemon-ability-nature">
@@ -812,14 +834,13 @@ async function updateSidebarHeader(isTrainerBattle) {
     const sidebarHeaderElement = document.getElementById('sidebar-header');
     sidebarHeaderElement.replaceChildren();
 
-    if (isTrainerBattle) {        
+    if (isTrainerBattle) {
         let html = `
             <span>RogueDex</span>
             <span class=sidebar-header-trainer-battle>(Trainer Battle)</span>
         `
         sidebarHeaderElement.insertAdjacentHTML("afterbegin", html)
-    }
-    else {        
+    } else {
         let html = `
             <span>RogueDex</span>
         `
@@ -912,7 +933,7 @@ async function scaleElements() {
     const enemiesDiv = document.getElementById('enemies');
     const alliesDiv = document.getElementById('allies');
     enemiesDiv.style.fontSize = `${16 * scaleFactor * scaleFactorMulti}px`;
-    alliesDiv.style.fontSize = `${16 * scaleFactor * scaleFactorMulti}px`;    
+    alliesDiv.style.fontSize = `${16 * scaleFactor * scaleFactorMulti}px`;
 }
 
 /* should probably refactor this and combine it with the scaleElements() function */
@@ -980,8 +1001,7 @@ async function toggleSidebarPartyDisplay(partyID, state) {
     if (state) {
         sidebarPartyElement.classList.add('visible')
         sidebarPartyElement.classList.remove('hidden')
-    }
-    else {
+    } else {
         sidebarPartyElement.classList.remove('visible')
         sidebarPartyElement.classList.add('hidden')
     }
@@ -1012,7 +1032,7 @@ async function dataMapping(pokemonLocation, divId, sessionData) {
             scaleElements();
         });
         await updateSidebarCards(divId, sessionData, pokemonData);
-        observeGameCanvasResize();    
+        observeGameCanvasResize();
     });
 }
 
@@ -1106,15 +1126,14 @@ function listenForDataUiModeChange() {
                                 Utils.LocalStorage.setSessionData();
                                 let sessionData = Utils.LocalStorage.getSessionData();
                                 await initCreation(sessionData);
-                            } 
-                            catch (err) { 
-                                console.error(err) 
-                            } 
+                            } catch (err) {
+                                console.error(err)
+                            }
                         }
                         if (newValue === "SAVE_SLOT") {
                             Utils.LocalStorage.clearAllSessionData();
                         }
-                        if (newValue === "SAVE_SLOT" || newValue === "TITLE" || newValue === "MODIFIER_SELECT" || newValue === "STARTER_SELECT") {                            
+                        if (newValue === "SAVE_SLOT" || newValue === "TITLE" || newValue === "MODIFIER_SELECT" || newValue === "STARTER_SELECT") {
                             deleteWrapperDivs()
                             //clearSidebar()
                         }
@@ -1122,7 +1141,7 @@ function listenForDataUiModeChange() {
                 });
             });
 
-            observer.observe(touchControlsElement, { attributes: true });
+            observer.observe(touchControlsElement, {attributes: true});
             console.log('Touch control listener called');
         } else {
             console.error('Element with ID "touchControls" not found.');
@@ -1141,23 +1160,22 @@ function observeGameCanvasResize() {
         for (const entry of entries) {
             //console.log(entry)
             resizeUIBottomPanel(entry.contentRect.right, entry.contentRect.width, entry.contentRect.height)
-        }      
+        }
         //console.log("Size changed");
     });
 
-    resizeObserver.observe( document.getElementById('app').getElementsByTagName('canvas')[0] );
+    resizeObserver.observe(document.getElementById('app').getElementsByTagName('canvas')[0]);
 }
 
 function resizeUIBottomPanel(right, width, height) {
-    
+
     let panel = document.getElementById('roguedex-bottom-panel')
     //const gameApp = document.getElementById('app')
     const sidePanel = document.getElementById('roguedex-sidebar')
 
     if (typeof panel === "undefined") {
         return
-    }
-    else {
+    } else {
         //const gameAppPos = gameApp.getBoundingClientRect();
         const sidebarPos = sidePanel.getBoundingClientRect();
 
