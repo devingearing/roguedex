@@ -4,6 +4,7 @@ const contentInjectables = [
     "/content/maps/natureMap.js",
     "/content/maps/Pokemon_To_Id.js",
     "/content/maps/weatherMap.js",
+    "/content/maps/moveList.js",
     "/content/util_classes/pokemonMapper.util.js",
     "/content/util_classes/localStorage.util.js"
 ];

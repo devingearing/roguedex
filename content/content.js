@@ -333,6 +333,12 @@ async function createPokemonCardDiv(cardId, pokemon) {
     return cardObj
 }
 
+function generateMovesetHTML(pokemon) {
+    let fullHTML = ``;
+    
+    return fullHTML;
+}
+
 function generateIVsHTML(pokemon, dexIvs, simpleDisplay = false, addStyleClasses = false) {
     let fullHTML = ``;
     for (let i in pokemon.ivs) {
@@ -703,6 +709,9 @@ function createSidebarTypeEffectivenessWrapper(typeEffectivenesses, typeEffectiv
     Updates party information for both sides (allies, enemies) in the sidebar.    
 */
 async function updateSidebarCards(partyID, sessionData, pokemonData) {
+    console.log(sessionData)
+    console.log(pokemonData)
+
     const trainer = sessionData.trainer;
     const enemyPartySize = sessionData.enemyParty.length;
     const allyPartySize = sessionData.party.length;
@@ -710,14 +719,15 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
     const isTrainerBattle = (trainer != null);
     let css_class_condensed = '';
 
+    /* Change the sidebar view to a more condensed version when more than 8 pokemon are fighting. (Olny some trianer battles) */
     if ((enemyPartySize + allyPartySize) > maxPokemonForDetailedView) {
         css_class_condensed = 'condensed';
     }
 
-    if (weather.type && weather.turnsLeft) {
-        await updateBottomPanel(pokemonData)
-    }
-    
+    /* Update bottom panel information. Logic will be handled in updateBottomPanel(). */
+    await updateBottomPanel(partyID, pokemonData)
+
+    /* Update the sidebars header. For now only sets/removes the trainer battle label. */
     await updateSidebarHeader(isTrainerBattle);
 
     const sidebarPartyElement = document.getElementById(`sidebar-${partyID}-box`)  
@@ -728,10 +738,17 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
 
     let partyWrapperHtml = `
         <div class="${partyID}-party">
+            <div class="sidebar-party-info" id="sidebar-${partyID}-party-info"></div>
             ${pokemonData.pokemon.map((pokemon, counter) => `
                 <div class="pokemon-entry ${css_class_condensed}" id="sidebar_${partyID}_${counter}">
                     <div class="pokemon-entry-image">
                         <canvas id="pokemon-icon_sidebar_${partyID}_${counter}" class="pokemon-entry-icon"></canvas>
+                        <div class="sidebar-pokemon-info tooltip">
+                            <span class="sidebar-pokemon-level ">Lvl. ${pokemon.level}</span>
+                            <span class="sidebar-pokemon-shiny ">${pokemon.shiny ? '☀' : ''}</span>
+                            <span class="sidebar-pokemon-luck ">☘ ${pokemon.luck}</span>
+                            ${createTooltipDiv(`Pokemons current level: ${pokemon.level}.\nIs a shiny: ${pokemon.level}.\nPokemon luck (from shiny): ${pokemon.luck}.`)}
+                        </div>
                     </div>
                     <div class="pokemon-type-effectiveness-wrapper">
                         ${createSidebarTypeEffectivenessWrapper(pokemon.typeEffectiveness, pokemon.typeEffectivenessDetailed)}
@@ -754,13 +771,15 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
                                 <span class="pokemon-nature-value">
                                     ${pokemon.nature}
                                 </span>
-                                ${createTooltipDiv("")}
                             </span>
                         </div>                       
                         
                         <div class="pokemon-ivs stat-cont">
                             ${partyID == 'allies' ? generateIVsHTML(pokemon, dexData[pokemon.baseId]["ivs"], true, true) : generateIVsHTML(pokemon, dexData[pokemon.baseId]["ivs"])}
-                        </div>
+                        </div>                       
+                        
+                        ${partyID == 'allies' ? generateMovesetHTML() : ''}                        
+
                     </div>
                 </div>
             `).join('')}
@@ -768,6 +787,7 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
     `
     sidebarPartyElement.insertAdjacentHTML("afterbegin", partyWrapperHtml)
 
+    /* Draw all pokemon icons onto the added canvas elements. */
     pokemonData.pokemon.forEach(function (value, i) {
         getPokemonIcon(value, `sidebar_${partyID}_${i}`)
     })
@@ -793,22 +813,45 @@ async function updateSidebarHeader(isTrainerBattle) {
     return
 }
 
-async function updateBottomPanel(pokemonData) {
+async function updateBottomPanel(partyID, pokemonData) {
     const bottomPanelElement = document.getElementById(`roguedex-bottom-panel`)
-
     bottomPanelElement.replaceChildren();
 
-    let weatherHtml = `
-        <div class="roguedex-bottom-panel-content">
-            <div class="roguedex-bottom-panel-header">RogueDex Bottom Panel</div>
-            <div class="roguedex-bottom-panel-weather-box">
-                <div class="text-base">
-                    Weather: ${weather.type}, Turns Left: ${weather.turnsLeft}
+    
+    let weatherHtml = '';
+    if (pokemonData.weather.type && pokemonData.weather.turnsLeft) {
+        weatherHtml = `
+            <div class="roguedex-bottom-panel-content">
+                <div class="roguedex-bottom-panel-header">RogueDex Bottom Panel</div>
+                <div class="roguedex-bottom-panel-weather-box">
+                    <div class="text-base">
+                        Weather: ${weather.type}, Turns Left: ${weather.turnsLeft}
+                    </div>
                 </div>
-            </div>
-        </div>    
-    `
-    bottomPanelElement.insertAdjacentHTML("afterbegin", weatherHtml);
+            </div>    
+        `
+    } else {
+        // delete existing weather div
+    }
+    
+    /* Calculate the allies party total luck (from shinies). */
+    
+    let luckTotal = 0;
+    if (partyID == 'allies') {        
+        pokemonData.pokemon.forEach(function (value, i) {
+            luckTotal += value.luck;
+        })
+        //document.getElementById(`sidebar-${partyID}-party-info`).innerHTML = `Party Luck: ${luckTotal}`;
+    }
+    let luckHtml = `<div class="bottom-panel-party-luck">Total Party Luck (from shinies): ${luckTotal}.</div>`;
+    
+    let html = `<div class="roguedex-bottom-panel-content">
+                    <div class="roguedex-bottom-panel-header">RogueDex Bottom Panel</div>
+                    ${weatherHtml}
+                    ${luckHtml}
+                </div>
+            `    
+    bottomPanelElement.insertAdjacentHTML("afterbegin", html);
     return
 }
 

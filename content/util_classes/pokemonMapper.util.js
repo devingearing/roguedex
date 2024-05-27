@@ -10,10 +10,11 @@ class PokemonMapperClass{
         this.I2A;
         this.N2I = window.__NatureMap;
         this.I2N;
+        this.MoveList = window.__MoveList;
         PokemonMapperClass.#init(this);
     }
 
-    static #init($this){
+    static #init($this) {
         $this.I2P = PokemonMapperClass.#calculateInverseMap($this.P2I);
         $this.I2W = PokemonMapperClass.#calculateInverseMap($this.W2I);
         $this.I2A = PokemonMapperClass.#calculateInverseMap($this.A2I);
@@ -66,9 +67,14 @@ class PokemonMapperClass{
             variant: pokemon.variant,
             fusionSpecies: (pokemon.hasOwnProperty('fusionSpecies')) ? pokemon.fusionSpecies : null,
             fusionAbilityIndex: pokemon.fusionAbilityIndex,
+            moveset: pokemon.moveset,
+            boss: pokemon.boss,
+            friendship: pokemon.friendship,
+            level: pokemon.level,
+            luck: pokemon.luck,
         }));
     }
-
+    
     static async #getPokeType(id) {
         console.log(id);
         const maxRetries = 3;
@@ -93,6 +99,21 @@ class PokemonMapperClass{
         }
     }
 
+    static async #getPokemonTypeMoveset(movelist, id, movesetObj) {
+        // https://pokeapi.co/api/v2/move/${id}
+        
+        /* currently does not account for g-moves and z-moves */
+        const moveset = movesetObj.map(move => ({
+            id: move.moveId,
+            name: movelist.default[move.moveId].name,
+            type: movelist.default[move.moveId].type,
+            category: movelist.default[move.moveId].category,
+            power: movelist.default[move.moveId].power,
+            maxPP: movelist.default[move.moveId].pp, // doesn't account for pp up
+            accuracy: movelist.default[move.moveId].accuracy,
+        }));
+        return moveset
+    }
 
     static async #getPokemonTypeEffectiveness($this, id) {
         const types = await PokemonMapperClass.#getPokeType(id);
@@ -360,8 +381,9 @@ class PokemonMapperClass{
 
         const pokemonPromises = pokemonArray.map(async (pokemon) => {
             const pokemonId = $this.fixVariantPokemonNames($this.I2P, pokemon.species).toLocaleLowerCase();
-            console.log(pokemonId)
+            //console.log(pokemonId)
             //const pokemonId = $this.I2P[$this.convertPokemonId(pokemon.species)].toLocaleLowerCase();
+            const moveset = await PokemonMapperClass.#getPokemonTypeMoveset($this.MoveList, pokemonId, pokemon.moveset);
             const typeEffectiveness = await PokemonMapperClass.#getPokemonTypeEffectiveness($this, pokemonId);
             const typeEffectivenessDetailed = await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, pokemonId);
             let basePokemon = $this.findBasePokemon($this.I2P[pokemon.species]);
@@ -386,6 +408,11 @@ class PokemonMapperClass{
                 basePokemon: basePokemon,
                 baseId: $this.P2I[basePokemon],
                 fusionId: pokemon.fusionSpecies,
+                moveset: moveset,
+                boss: pokemon.boss,
+                friendship: pokemon.friendship,
+                level: pokemon.level,
+                luck: pokemon.luck,
             };
         });
 

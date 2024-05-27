@@ -63,7 +63,8 @@ body {
     box-sizing: border-box;
 }
 .roguedex-sidebar.active {
-    display: block;
+    display: block;    
+    overflow-y: clip;
 }
 .roguedex-sidebar.hidden {
     display: none;
@@ -184,7 +185,16 @@ body.sidebar-Bottom {
 .pokemon-entry .pokemon-entry-image {
     padding: 0.5em 0;
     vertical-align: middle;
+    position: relative;
 }
+.sidebar-pokemon-info {
+    display: block;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding-left: 0.5em;
+}
+
 .pokemon-entry:last-child.div {
     border-bottom: none;
 }
