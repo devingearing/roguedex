@@ -83,6 +83,21 @@ body.sidebar-Bottom {
 .running-status.sidebar-active {
     display: none;
 }
+#sidebar-switch-iv-moves {
+    position: absolute;
+    top: 0;
+    left: 0;
+    min-width: 1em;
+    min-height: 1em;
+    font-size: 1em;
+    margin: 0.29em 0 0 0.3em;
+    background-color: #5c5c5c;
+    color: white;
+    border-radius: 3px;
+    border: 1 px solid var(--sidebar-borders-color);
+
+    display: none;
+}
 .roguedex-sidebar .sidebar-header {
     color: white;
     font-size: 2em;

@@ -6,7 +6,8 @@ const contentInjectables = [
     "/content/maps/weatherMap.js",
     "/content/maps/moveList.js",
     "/content/util_classes/pokemonMapper.util.js",
-    "/content/util_classes/localStorage.util.js"
+    "/content/util_classes/localStorage.util.js",
+    "/content/util_classes/uiController.util.js"
 ];
 
 class UtilsClass extends EventTarget {
@@ -17,6 +18,7 @@ class UtilsClass extends EventTarget {
         this.classesReady = {
             "pokemonMapper.util.js": false,
             "localStorage.util.js": false,
+            "uiController.util.js": false,
         };
         this._isReady = false; // Use a private variable for the actual value
         this.index = 0;
@@ -71,6 +73,10 @@ class UtilsClass extends EventTarget {
                 this.classesReady["localStorage.util.js"] = true;
                 this.LocalStorage = new LocalStorageClass();
                 this.checkIfRead();
+            } else if (targetScript === "/content/util_classes/uiController.util.js") {
+                this.classesReady["uiController.util.js"] = true;
+                //this.UiController = new UIController();
+                //this.checkIfRead();
             } else {
                 console.log(`Script ${targetScript} loaded but no special handling required.`);
             }

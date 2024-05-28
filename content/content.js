@@ -695,7 +695,8 @@ async function createCardsDiv(divId, pokemonData, pokemonIndex) {
 
 function createSidebar() {
     const sidebarHtml = `
-        <div class="roguedex-sidebar" id="roguedex-sidebar">
+        <div class="roguedex-sidebar" id="roguedex-sidebar">        
+            <button id="sidebar-switch-iv-moves">&#8644;</button>
             <div class="sidebar-header" id="sidebar-header">
                 <span>RogueDex</span>
             </div>
@@ -710,7 +711,12 @@ function createSidebar() {
     `
 
     document.body.insertAdjacentHTML("afterbegin", sidebarHtml)
-    document.body.insertAdjacentHTML("beforeend", bottomPanelHtml)
+    document.body.insertAdjacentHTML("beforeend", bottomPanelHtml)   
+
+    onElementAvailable("#sidebar-switch-iv-moves", () => {
+        //let button = document.getElementById('sidebar-switch-iv-moves');
+        const uiController_switchIVsMovesetDisplay = new UIController(sidebarSwitchBetweenIVsAndMoveset, '#sidebar-switch-iv-moves', { bindMouse: true, bindKeyboard: false, bindGamepad: false });
+    });
 }
 
 function createSidebarTypeEffectivenessWrapper(typeEffectivenesses) {
@@ -848,6 +854,10 @@ async function updateSidebarHeader(isTrainerBattle) {
     }
     return
 }
+
+async function sidebarSwitchBetweenIVsAndMoveset() {
+    console.log('Sidebar: pressed button to switch between ivs and movesets.')
+}   
 
 async function updateBottomPanel(partyID, pokemonData) {
     const bottomPanelElement = document.getElementById(`roguedex-bottom-panel`)
@@ -1154,6 +1164,16 @@ function listenForDataUiModeChange() {
 }
 
 listenForDataUiModeChange();
+
+function onElementAvailable(selector, callback) {
+    const observer = new MutationObserver(mutations => {
+      if (document.querySelector(selector)) {
+        observer.disconnect();
+        callback();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+}
 
 function observeGameCanvasResize() {
     const resizeObserver = new ResizeObserver((entries) => {
