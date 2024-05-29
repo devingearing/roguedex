@@ -136,26 +136,30 @@ class PokemonMapperClass{
         else{
             types = typeOverload;
         }
-        // ignore single type pokemon
-        if (types.length > 1) {
-            const { weaknesses, resistances, immunities, cssClasses } = await PokemonMapperClass.#calculateTypeEffectivenessDetailed($this, types);            
-            return {
-                'weaknesses': weaknesses,
-                'resistances': resistances,
-                'immunities': immunities,
-                'cssClasses' : cssClasses
+        try {
+            // ignore single type pokemon
+            if (types.length > 1) {
+                const { weaknesses, resistances, immunities, cssClasses } = await PokemonMapperClass.#calculateTypeEffectivenessDetailed($this, types);            
+                return {
+                    'weaknesses': weaknesses,
+                    'resistances': resistances,
+                    'immunities': immunities,
+                    'cssClasses' : cssClasses
+                }
             }
-        }
-        else {
-            const { weaknesses, resistances, immunities } = await PokemonMapperClass.#calculateTypeEffectiveness($this, types);
-            console.log("single type");
-            console.log(weaknesses, resistances, immunities);
-            return {
-                'weaknesses': {normal: [...weaknesses]},
-                'resistances': {normal: [...resistances]},
-                'immunities': {normal: [...immunities]},
-                'cssClasses' : {}
+            else {
+                const { weaknesses, resistances, immunities } = await PokemonMapperClass.#calculateTypeEffectiveness($this, types);
+                console.log("single type");
+                console.log(weaknesses, resistances, immunities);
+                return {
+                    'weaknesses': {normal: [...weaknesses]},
+                    'resistances': {normal: [...resistances]},
+                    'immunities': {normal: [...immunities]},
+                    'cssClasses' : {}
+                }
             }
+        } catch (error) {
+            console.error(error)
         }
         return { }
     }

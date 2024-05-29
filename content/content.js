@@ -178,31 +178,31 @@ function createTypeEffectivenessWrapper(typeEffectivenesses) {
         };
 
         const allTypes = [
-            ...(effectivenessObj.normal || []),
-            ...(effectivenessObj.double || [])
+            ...(effectivenessObj.double || []),
+            ...(effectivenessObj.normal || [])
         ];
 
         return `
-          <div class="pokemon-${effectiveness} tooltip">
-              ${allTypes.map((type, counter) => {
-            const cssClass = getTypeEffectivenessCssClass(type, typeEffectivenesses);
-            if (effectiveness === "cssClasses") {
-                return ''; // Skip if effectiveness is not equal to cssClass
-            }
-            return `
-                      ${/* The current html structure requires to wrap every third element in a div, the implementation here gets a bit ugly. */''}
-                      ${(counter % 3 === 0) ? `<div>` : ''}
+            <div class="pokemon-${effectiveness} tooltip">
+                ${allTypes.map((type, counter) => {
+                    const cssClass = getTypeEffectivenessCssClass(type, typeEffectivenesses);
+                    if (effectiveness === "cssClasses") {
+                        return ''; // Skip if effectiveness is not equal to cssClass
+                    }
+                    return `
+                            ${/* The current html structure requires to wrap every third element in a div, the implementation here gets a bit ugly. */''}
+                            ${(counter % 3 === 0) ? `<div>` : ''}
 
-                      <div class="type-icon ${cssClass}" 
-                          style="background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/sword-shield/${Types[type]}.png')"></div>
-                      
-                      ${/* Closing div, after every third element or when the arrays max length is reached. */''}
-                      ${((counter + 1) % 3 === 0) || ((counter + 1) === allTypes.length) ? `</div>` : ''}
-                  `;
-        }).join('')}
-              ${createTooltipDiv(tooltipMap[effectiveness] || "")}
-          </div>
-       `;
+                            <div class="type-icon ${cssClass}" 
+                                style="background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/sword-shield/${Types[type]}.png')"></div>
+                            
+                            ${/* Closing div, after every third element or when the arrays max length is reached. */''}
+                            ${((counter + 1) % 3 === 0) || ((counter + 1) === allTypes.length) ? `</div>` : ''}
+                        `;
+                }).join('')}
+                ${createTooltipDiv(tooltipMap[effectiveness] || "")}
+            </div>
+        `;
     }).join('')}`;
 
     return typesHTML;
@@ -344,20 +344,15 @@ async function createPokemonCardDiv(cardId, pokemon) {
 }
 
 function generateMovesetHTML(pokemon) {
-    let html = '';    
+    let html = '';
     for (let i in pokemon.moveset) {
         let move = pokemon.moveset[i];
         html += `
-            <div class="tooltip">
-                <div class="pokemon-move">
-                    <span class="pokemon-move-name">${move.name}</span>
-                    <span class="pokemon-move-type">${move.type}</span>
-                </div>                
-                ${createTooltipDiv(`Category: ${move.category}<br>Power: ${move.name}<br>maxPP: ${move.maxPP}<br>Accuracy: ${move.accuracy}`)}
-            </div>            
+            <div class="pokemon-move">
+                <span class="pokemon-move-name move-${(move.type).toLowerCase()}">${move.name}</span>
+            </div>         
         `
     }
-
     return html;
 }
 
@@ -695,8 +690,8 @@ async function createCardsDiv(divId, pokemonData, pokemonIndex) {
 
 function createSidebar() {
     const sidebarHtml = `
-        <div class="roguedex-sidebar" id="roguedex-sidebar">        
-            <button id="sidebar-switch-iv-moves">&#8644;</button>
+        <div class="roguedex-sidebar hideIVs" id="roguedex-sidebar" data-shown-pokemon-text-info="movesets">        
+            <button id="sidebar-switch-iv-moves" class="tooltip">&#8644; ${createTooltipDiv('Switch between showing ally IVs and movesets.')}</button>
             <div class="sidebar-header" id="sidebar-header">
                 <span>RogueDex</span>
             </div>
@@ -715,7 +710,8 @@ function createSidebar() {
 
     onElementAvailable("#sidebar-switch-iv-moves", () => {
         //let button = document.getElementById('sidebar-switch-iv-moves');
-        const uiController_switchIVsMovesetDisplay = new UIController(sidebarSwitchBetweenIVsAndMoveset, '#sidebar-switch-iv-moves', { bindMouse: true, bindKeyboard: false, bindGamepad: false });
+        const uiController_switchIVsMovesetDisplay = new UIController(sidebarSwitchBetweenIVsAndMoveset, '#sidebar-switch-iv-moves', { bindMouse: true, bindKeyboard: false, bindGamepad: true });
+        uiController_switchIVsMovesetDisplay.setBindings(null, [6, 5]) // xbox lt + rb
     });
 }
 
@@ -728,9 +724,10 @@ function createSidebarTypeEffectivenessWrapper(typeEffectivenesses) {
             return ''; // Skip if effectiveness is not equal to cssClass
         }
 
+        // Order of arrays determines order of types, keep the double array in front.
         const allTypes = [
-            ...(effectivenessObj.normal || []),
-            ...(effectivenessObj.double || [])
+            ...(effectivenessObj.double || []),
+            ...(effectivenessObj.normal || [])
         ];
 
         return `
@@ -749,9 +746,6 @@ function createSidebarTypeEffectivenessWrapper(typeEffectivenesses) {
     Updates party information for both sides (allies, enemies) in the sidebar.    
 */
 async function updateSidebarCards(partyID, sessionData, pokemonData) {
-    console.log(sessionData)
-    console.log(pokemonData)
-
     const trainer = sessionData.trainer;
     const enemyPartySize = sessionData.enemyParty.length;
     const allyPartySize = sessionData.party.length;
@@ -857,6 +851,20 @@ async function updateSidebarHeader(isTrainerBattle) {
 
 async function sidebarSwitchBetweenIVsAndMoveset() {
     console.log('Sidebar: pressed button to switch between ivs and movesets.')
+    let sidebarElement = document.getElementById('roguedex-sidebar');
+
+    if (!sidebarElement.dataset.shownPokemonTextInfo) {
+        sidebarElement.dataset.shownPokemonTextInfo = 'ivs'; // set default if not set already    
+    }
+    if (sidebarElement.dataset.shownPokemonTextInfo == 'ivs') {
+        sidebarElement.dataset.shownPokemonTextInfo = 'movesets';
+        sidebarElement.classList.remove('hideMoveset');
+        sidebarElement.classList.add('hideIVs');
+    } else if (sidebarElement.dataset.shownPokemonTextInfo == 'movesets') {
+        sidebarElement.dataset.shownPokemonTextInfo = 'ivs';
+        sidebarElement.classList.remove('hideIVs');
+        sidebarElement.classList.add('hideMoveset');
+    }
 }   
 
 async function updateBottomPanel(partyID, pokemonData) {

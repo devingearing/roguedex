@@ -89,14 +89,12 @@ body.sidebar-Bottom {
     left: 0;
     min-width: 1em;
     min-height: 1em;
-    font-size: 1em;
+    font-size: 1.5em;
     margin: 0.29em 0 0 0.3em;
     background-color: #5c5c5c;
     color: white;
     border-radius: 3px;
     border: 1 px solid var(--sidebar-borders-color);
-
-    display: none;
 }
 .roguedex-sidebar .sidebar-header {
     color: white;
@@ -116,6 +114,8 @@ body.sidebar-Bottom {
     font-family: 'emerald';
     border-top: 1px solid var(--sidebar-borders-color);    
     margin: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 .enemies-party {
     --party-border-width : 0.3em;
@@ -297,6 +297,9 @@ body.sidebar-Bottom {
     padding: 0.2em 0.2m 0.2em 0px !important;
     font-size: 1.5em;
 }
+.roguedex-sidebar.hideIVs .allies-party .pokemon-ivs, .roguedex-sidebar.hideMoveset .allies-party .pokemon-moveset-wrapper {
+    display: none;
+}
 .roguedex-sidebar .pokemon-ivs, .roguedex-sidebar .pokemon-ability-nature {
     display: flex;
     flex-wrap: wrap;
@@ -350,9 +353,40 @@ body.sidebar-Bottom {
     50% {opacity: 1.0;}
     100% {opacity: 0.5;}
 }
-.roguedex-sidebar .pokemon-moveset-wrapper {
-    display: none;
+.pokemon-moveset-wrapper {
+    margin-top: 0.2em;
+    border: 1px solid #2a2a2a;
+    display: flex;
+    flex-wrap: wrap;
+    background-color: #1a1a1a;
 }
+.pokemon-moveset-wrapper .pokemon-move {
+    padding: 0.1em 0.2em 0.1em 0.2em;
+    flex-basis: 50%;
+    box-sizing: border-box;
+    text-shadow: var(--text-shadow-dark);
+}
+.pokemon-moveset-wrapper .pokemon-move-name.move-normal { color: rgb(170 170 153); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-fire { color: rgb(255 68 34); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-water { color: rgb(51 153 255); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-electric { color: rgb(255 204 51); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-grass { color: rgb(119 204 85); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-ice { color: rgb(102 204 255); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-fighting { color: rgb(187 85 68); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-poison { color: rgb(170 85 153); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-ground { color: rgb(187 85 68); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-flying { color: rgb(136 153 255); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-psychic { color: rgb(255 85 153); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-bug { color: rgb(170 187 34); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-rock { color: rgb(187 170 102); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-ghost { color: rgb(102 102 187); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-dragon { color: rgb(119 102 238); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-dark { color: rgb(119 85 68); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-steel { color: rgb(170 170 187); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-fairy { color: rgb(238 153 238); }
+.pokemon-moveset-wrapper .pokemon-move-name.move-stellar { color: white; }
+
+
 
 /* change view for trainer battles */
 .pokemon-entry.condensed {
@@ -374,7 +408,6 @@ body.sidebar-Bottom {
 }
 
 /* sidebar end */
-
 
 /* bottom panel */
 
