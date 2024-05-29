@@ -22,8 +22,8 @@ export default class ImageInjector {
             ];
 
             parts.forEach(part => {
-                const img = new Image();
-                let prefix = (this.browserApi === chrome) ? 'chrome-extension' : 'moz-extension';
+                const img = new window.Image();
+                const prefix = (this.browserApi === chrome) ? 'chrome-extension' : 'moz-extension';
                 const url = `${prefix}://${this.extensionId}/images/menu/${menuType}/${part}.png`;
                 img.src = url;
                 this.preloadedImages[menuType][part] = img;

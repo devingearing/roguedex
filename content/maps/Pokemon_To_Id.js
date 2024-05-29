@@ -1,4 +1,4 @@
-window["__Species"] = {
+window.__Species = {
     BULBASAUR: 1,
     IVYSAUR: 2,
     VENUSAUR: 3,

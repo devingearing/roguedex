@@ -1,4 +1,4 @@
-window["__EvolutionMap"] = {
+window.__EvolutionMap = {
     BULBASAUR: {name: "IVYSAUR", val: 16},
     IVYSAUR: {name: "VENUSAUR", val: 32},
     CHARMANDER: {name: "CHARMELEON", val: 16},

@@ -10,11 +10,11 @@ const contentInjectables = [
     "/content/util_classes/uiController.util.js"
 ];
 
-class UtilsClass extends EventTarget {
+class UtilsClass extends EventTarget {  // eslint-disable-line no-unused-vars
     constructor() {
         super();
-        this.PokeMapper;
-        this.LocalStorage;
+        this.PokeMapper = null; // Initialize properly
+        this.LocalStorage = null; // Initialize properly
         this.classesReady = {
             "pokemonMapper.util.js": false,
             "localStorage.util.js": false,
@@ -41,8 +41,8 @@ class UtilsClass extends EventTarget {
 
     checkIfRead() {
         let isReady = true;
-        for (let cI in this.classesReady) {
-            let targetClass = this.classesReady[cI];
+        for (const cI in this.classesReady) {
+            const targetClass = this.classesReady[cI];
             if (targetClass === false) {
                 isReady = false;
             }
@@ -56,7 +56,7 @@ class UtilsClass extends EventTarget {
             return;
         }
 
-        let targetScript = contentInjectables[this.index];
+        const targetScript = contentInjectables[this.index];
         console.log(`Injecting script: ${targetScript}`);
         const scriptElem = document.createElement("script");
         scriptElem.src = chrome.runtime.getURL(targetScript);
@@ -75,8 +75,8 @@ class UtilsClass extends EventTarget {
                 this.checkIfRead();
             } else if (targetScript === "/content/util_classes/uiController.util.js") {
                 this.classesReady["uiController.util.js"] = true;
-                //this.UiController = new UIController();
-                //this.checkIfRead();
+                // this.UiController = new UIController();
+                this.checkIfRead();
             } else {
                 console.log(`Script ${targetScript} loaded but no special handling required.`);
             }

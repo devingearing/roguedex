@@ -1,4 +1,4 @@
-window["__WeatherMap"] = {
+window.__WeatherMap = {
     NONE: 0,
     SUNNY: 1,
     RAIN: 2,

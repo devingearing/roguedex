@@ -19,7 +19,7 @@
  * uiController4.setBindings(document.getElementById('myElement'), ['AltLeft', 'KeyB', 'KeyC'], [2, 3]); // Assuming these are valid button indices
  * 
  */
-class UIController {
+class UIController {    // eslint-disable-line no-unused-vars
      /**
      * Set of assigned keyboard hotkeys and gamepad button combinations to ensure uniqueness.
      */
@@ -93,7 +93,7 @@ class UIController {
      * @param {MouseEvent} event The mouse click event object.
      */
     handleMouseClick(event) {
-        //console.log('Mouse clicked:', event);
+        // console.log('Mouse clicked:', event);
         this.externalFunction('mouse', event);
     }
 
@@ -103,7 +103,7 @@ class UIController {
      */
     setMouseElement(element) {
         if (typeof element === 'string') {
-            let tempElement = document.querySelector(element);
+            const tempElement = document.querySelector(element);
             if (tempElement === null) {
                 throw new Error("Provided DOM element doesn't exist. Selector (string): ", element);
             } else {
@@ -198,7 +198,7 @@ class UIController {
                     }
                 }
             }
-            requestAnimationFrame(checkGamepads);
+            window.requestAnimationFrame(checkGamepads);
         };
         checkGamepads();
     }

@@ -1,7 +1,4 @@
-const browserApi = typeof browser !== "undefined" ? browser : chrome;
-
-
-
+const browserApi = typeof browser !== "undefined" ? browser : chrome; // eslint-disable-line no-unused-vars
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "fetchFusionImageHtml") {
@@ -22,7 +19,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         fetch(request.url)
             .then(response => response.blob())
             .then(blob => {
-                const reader = new FileReader();
+                const reader = new window.FileReader();
                 reader.onloadend = () => {
                     sendResponse({ success: true, dataUrl: reader.result });
                 };

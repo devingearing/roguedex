@@ -1,4 +1,4 @@
-window["__AbilityMap"] = {
+window.__AbilityMap = {
     NONE: 0,
     STENCH: 1,
     DRIZZLE: 2,

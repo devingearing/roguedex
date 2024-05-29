@@ -1,7 +1,7 @@
 // const browserApi = typeof browser !== "undefined" ? browser : chrome;
 // import CryptoJS from '../libs/crypto-js.min';
 
-class LocalStorageClass {
+class LocalStorageClass {   // eslint-disable-line no-unused-vars
     constructor() {
         this.slotId = -1;
         this.saveKey = "x0i2O7WRiANTqPmZ";
@@ -18,38 +18,38 @@ class LocalStorageClass {
 
     clearAllSessionData(){
         setTimeout(function() {
-            for (let key in localStorage) {
-                if (key.includes('sessionData')) localStorage.removeItem(key)
+            for (const key in window.localStorage) {
+                if (key.includes('sessionData')) window.localStorage.removeItem(key)
             }
         }, 1000)
     }
 
     saveImageToCache(key, imageData) {
         try {
-            localStorage.setItem(`img_cache_${key}`, imageData);
+            window.localStorage.setItem(`img_cache_${key}`, imageData);
         } catch (e) {
             console.error("Failed to save image to cache", e);
         }
     }
 
     getImageFromCache(key) {
-        return localStorage.getItem(`img_cache_${key}`);
+        return window.localStorage.getItem(`img_cache_${key}`);
     }
 
     clearImageCache() {
-        const keys = Object.keys(localStorage);
+        const keys = Object.keys(window.localStorage);
         keys.forEach(key => {
             if (key.startsWith('img_cache_')) {
-                localStorage.removeItem(key);
+                window.localStorage.removeItem(key);
             }
         });
     }
 
     setSessionData(){
         let currentSessionData = {}
-        for (let key in localStorage) {
+        for (const key in window.localStorage) {
             if ((this.slotId > 0 && key.includes(`sessionData${slotId}`)) || key.includes('sessionData')) {
-                currentSessionData = localStorage.getItem(key)
+                currentSessionData = window.localStorage.getItem(key)
                 break
             }
         }
@@ -99,13 +99,13 @@ class LocalStorageClass {
     }
 
     getPlayerData(){
-        let localStorageData = localStorage.getItem(this.getDataKey('data_'));
+        const localStorageData = window.localStorage.getItem(this.getDataKey('data_'));
         const decryptedString = CryptoJS.AES.decrypt(localStorageData, this.saveKey).toString(CryptoJS.enc.Utf8);
         return JSON.parse(decryptedString);
     }
 
     getDataKey(matchString) {
-        const keys = Object.keys(localStorage);
+        const keys = Object.keys(window.localStorage);
         for (let i = 0; i < keys.length; i++) {
             const key = keys[i];
             if (key.includes(matchString)) {
@@ -113,7 +113,6 @@ class LocalStorageClass {
             }
         }
     }
-
 }
 
 

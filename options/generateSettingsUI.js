@@ -19,7 +19,7 @@ const generateSettingsUI = () => {
             const span = document.createElement('span');
             span.classList.add('option');
             let appended = "";
-            if(setting.hasOwnProperty("appendText")){
+            if(Object.hasOwn(setting, "appendText")){
                 appended = setting.appendText;
             }
             span.textContent = option+appended;

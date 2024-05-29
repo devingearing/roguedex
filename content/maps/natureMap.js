@@ -1,4 +1,4 @@
-window["__NatureMap"] = {
+window.__NatureMap = {
     HARDY: 0,
     LONELY: 1,
     BRAVE: 2,

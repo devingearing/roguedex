@@ -1,4 +1,4 @@
-window["__MoveList"] = {
+window.__MoveList = {
     "g-moves": {
         "1": {
             name: "G-Max Wildfire",

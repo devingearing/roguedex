@@ -1,15 +1,15 @@
 class PokemonMapperClass{
     constructor() {
         this.P2I = window.__Species;
-        this.I2P;
+        this.I2P = null;
         this.EvoMap = window.__EvolutionMap;
-        this.PrevoMap;
+        this.PrevoMap = null;
         this.W2I = window.__WeatherMap;
-        this.I2W;
+        this.I2W = null;
         this.A2I = window.__AbilityMap;
-        this.I2A;
+        this.I2A = null;
         this.N2I = window.__NatureMap;
-        this.I2N;
+        this.I2N = null;
         this.MoveList = window.__MoveList;
         PokemonMapperClass.#init(this);
     }
@@ -24,7 +24,7 @@ class PokemonMapperClass{
 
     static #calculateInverseMap(map){
         console.log(map);
-        let returnMap = {};
+        const returnMap = {};
         for (const [key, value] of Object.entries(map)) {
             returnMap[value] = key;
         }
@@ -33,10 +33,10 @@ class PokemonMapperClass{
 
     static #calcPrevolution(evoMapT){
         // let evoMapT = window.__EvolutionMap;
-        let preEvolutions = {};
+        const preEvolutions = {};
         const prevolutionKeys = Object.keys(evoMapT);
         prevolutionKeys.forEach(pk =>{
-            let evolutions =  evoMapT[pk];
+            const evolutions =  evoMapT[pk];
             if (Array.isArray(evolutions)) {
                 evolutions.forEach(evo => {
                     preEvolutions[evo.name] = pk;
@@ -65,7 +65,7 @@ class PokemonMapperClass{
             pokerus: pokemon.pokerus,
             shiny: pokemon.shiny,
             variant: pokemon.variant,
-            fusionSpecies: (pokemon.hasOwnProperty('fusionSpecies')) ? pokemon.fusionSpecies : null,
+            fusionSpecies: (Object.hasOwn(pokemon,'fusionSpecies')) ? pokemon.fusionSpecies : null,
             fusionAbilityIndex: pokemon.fusionAbilityIndex,
             moveset: pokemon.moveset,
             boss: pokemon.boss,
@@ -120,9 +120,9 @@ class PokemonMapperClass{
         if (types) {
             const { weaknesses, resistances, immunities } = await PokemonMapperClass.#calculateTypeEffectiveness($this, types);
             return {
-                'weaknesses': weaknesses,
-                'resistances': resistances,
-                'immunities': immunities
+                weaknesses,
+                resistances,
+                immunities
             }
         }
         return {}
@@ -141,10 +141,10 @@ class PokemonMapperClass{
             if (types.length > 1) {
                 const { weaknesses, resistances, immunities, cssClasses } = await PokemonMapperClass.#calculateTypeEffectivenessDetailed($this, types);            
                 return {
-                    'weaknesses': weaknesses,
-                    'resistances': resistances,
-                    'immunities': immunities,
-                    'cssClasses' : cssClasses
+                    weaknesses,
+                    resistances,
+                    immunities,
+                    cssClasses
                 }
             }
             else {
@@ -229,55 +229,55 @@ class PokemonMapperClass{
             [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
         ];
 
-        let type1 = types[0]
-        let type2 = types[1]
-        let primaryIndex	= typesInPokemondbOrder.indexOf(type1)
-        let secondaryIndex	= typesInPokemondbOrder.indexOf(type2)
+        const type1 = types[0]
+        const type2 = types[1]
+        const primaryIndex	= typesInPokemondbOrder.indexOf(type1)
+        const secondaryIndex	= typesInPokemondbOrder.indexOf(type2)
 
-        //let results = { defenderPair : [type1, type2], immune : [], normal : [], half : [], quarter : [], double : [], quadrupel : [] }
-        let weaknesses = { 'normal' : [], 'double' : [] }
-        let resistances = { 'normal' : [], 'double' : [] }
-        let immunities = { 'normal' : [] }
-        let cssClasses = {}
-        //const typeEffectivenessObj = {}
+        // let results = { defenderPair : [type1, type2], immune : [], normal : [], half : [], quarter : [], double : [], quadrupel : [] }
+        const weaknesses = { 'normal' : [], 'double' : [] }
+        const resistances = { 'normal' : [], 'double' : [] }
+        const immunities = { 'normal' : [] }
+        const cssClasses = {}
+        // const typeEffectivenessObj = {}
 
         typesInPokemondbOrder.forEach((attackerType, i) => {
-            let defenderType_1 = genDefault[i][primaryIndex]
-            let defenderType_2 = genDefault[i][secondaryIndex]
+            const defenderType1 = genDefault[i][primaryIndex]
+            const defenderType2 = genDefault[i][secondaryIndex]
 
             // at least 1 type is immune => immune
-            if (defenderType_1 == 0 || defenderType_2 == 0) {
+            if (defenderType1 === 0 || defenderType2 === 0) {
                 console.log("AT");
                 console.log(attackerType);
                 immunities.normal.push(attackerType)
                 cssClasses[attackerType] = 'no-dmg'
-                return
+                
             }
             // both types are weak => quadrupel dmg
-            else if ((defenderType_1 == 2 && defenderType_2 == 2)) {
+            else if ((defenderType1 === 2 && defenderType2 === 2)) {
                 weaknesses.double.push(attackerType)
                 cssClasses[attackerType] = 'super-dmg'
             }
             // one type is weak, the other takes normal dmg => double dmg
-            else if ((defenderType_1 == 2 && defenderType_2 == 1) || (defenderType_2 == 2 && defenderType_1 == 1)) {
+            else if ((defenderType1 === 2 && defenderType2 === 1) || (defenderType2 === 2 && defenderType1 === 1)) {
                 weaknesses.normal.push(attackerType)
                 cssClasses[attackerType] = 'double-dmg'
             }
             // one type is weak, the other resists (half) => normal dmg
-            else if ((defenderType_1 == 2 && defenderType_2 == h) || (defenderType_2 == 2 && defenderType_1 == h)) {
+            else if ((defenderType1 === 2 && defenderType2 === h) || (defenderType2 === 2 && defenderType1 === h)) {
                 // for the moment don't return, default dmg not being used
             }
             // both types take normal dmg => normal dmg
-            else if (defenderType_1 == _ && defenderType_2 == _) {
+            else if (defenderType1 === _ && defenderType2 === _) {
                 // for the moment don't return, default dmg not being used
             }
             // one type resists, the other takes normal dmg => half dmg
-            else if ((defenderType_1 == h && defenderType_2 == _) || (defenderType_2 == h && defenderType_1 == _)) {
+            else if ((defenderType1 === h && defenderType2 === _) || (defenderType2 === h && defenderType1 === _)) {
                 resistances.normal.push(attackerType)
                 cssClasses[attackerType] = 'resist'
             }
             // both types resist (half) => quarter dmg
-            else if (defenderType_1 == h && defenderType_2 == h) {
+            else if (defenderType1 === h && defenderType2 === h) {
                 resistances.double.push(attackerType)
                 cssClasses[attackerType] = 'super-resist'
             }
@@ -346,7 +346,7 @@ class PokemonMapperClass{
     }
 
     async getPokemonAbility(pokemonId, pokemonAbilityIndex, fusionId, fusionAbilityIndex) {
-        let $this = this;
+        const $this = this;
         let pokeID;
         let abilityIndex;
         if(fusionId){
@@ -354,7 +354,7 @@ class PokemonMapperClass{
             abilityIndex = fusionAbilityIndex;
         }
         else{
-            //pokeID = (this.I2P[pokemonId]).toLowerCase();
+            // pokeID = (this.I2P[pokemonId]).toLowerCase();
             pokeID = $this.fixVariantPokemonNames($this.I2P, pokemonId).toLocaleLowerCase();
             abilityIndex = pokemonAbilityIndex;
         }
@@ -394,7 +394,7 @@ class PokemonMapperClass{
         else{
             const baseTypes = await PokemonMapperClass.#getPokeType(pokemonName);
             const fusionTypes = await PokemonMapperClass.#getPokeType(fusionName);
-            let finalType = [];
+            const finalType = [];
             finalType.push(baseTypes[0]);
             if(fusionTypes.length > 1) {
                 if(fusionTypes[1] !== finalType[0]) {
@@ -415,8 +415,8 @@ class PokemonMapperClass{
     }
 
     async getPokemonArray(pokemonData, arena) {
-        let $this = this;
-        let pokemonArray = PokemonMapperClass.#mapPartyToPokemonArray(pokemonData);
+        const $this = this;
+        const pokemonArray = PokemonMapperClass.#mapPartyToPokemonArray(pokemonData);
         console.log(pokemonArray);
         let frontendPokemonArray = [];
         let weather = {};
@@ -432,11 +432,11 @@ class PokemonMapperClass{
             const pokemonId = $this.fixVariantPokemonNames($this.I2P, pokemon.species).toLocaleLowerCase();
             const fusionId = $this.fixVariantPokemonNames($this.I2P, pokemon.fusionSpecies)?.toLocaleLowerCase();
             console.log(pokemonId)
-            //const pokemonId = $this.I2P[$this.convertPokemonId(pokemon.species)].toLocaleLowerCase();
+            // const pokemonId = $this.I2P[$this.convertPokemonId(pokemon.species)].toLocaleLowerCase();
             const moveset = await PokemonMapperClass.#getPokemonTypeMoveset($this.MoveList, pokemonId, pokemon.moveset);
             const typeEffectiveness = await PokemonMapperClass.#getFullTypeEffectivenessAllCases($this, pokemonId, fusionId);
-            let basePokemon = $this.findBasePokemon($this.I2P[pokemon.species]);
-            let name = $this.getPokemonName(pokemon);
+            const basePokemon = $this.findBasePokemon($this.I2P[pokemon.species]);
+            const name = $this.getPokemonName(pokemon);
             return {
                 id: $this.convertPokemonId(pokemon.species),
                 name: $this.capitalizeFirstLetter(name.toUpperCase()),
@@ -449,10 +449,10 @@ class PokemonMapperClass{
                 ivs: pokemon.ivs,
                 ability: await $this.getPokemonAbility(pokemon.species, pokemon.abilityIndex, pokemon.fusionSpecies, pokemon.fusionAbilityIndex),
                 nature: $this.I2N[pokemon.nature],
-                basePokemon: basePokemon,
+                basePokemon,
                 baseId: $this.P2I[basePokemon],
                 fusionId: pokemon.fusionSpecies,
-                moveset: moveset,
+                moveset,
                 boss: pokemon.boss,
                 friendship: pokemon.friendship,
                 level: pokemon.level,
@@ -462,26 +462,26 @@ class PokemonMapperClass{
 
         frontendPokemonArray = await Promise.all(pokemonPromises);
 
-        return { pokemon: frontendPokemonArray, weather: weather };
+        return { pokemon: frontendPokemonArray, weather };
     }
 
     getPokemonName(pokemon){
         if(pokemon.fusionSpecies){
-            let nameA = this.I2P[pokemon.species];
-            let nameB = this.I2P[pokemon.fusionSpecies];
+            const nameA = this.I2P[pokemon.species];
+            const nameB = this.I2P[pokemon.fusionSpecies];
             return this.getFusedSpeciesName(nameA, nameB);
-            //getFusedSpeciesName
+            // getFusedSpeciesName
         }
         else{
-            //this.I2P[pokemon.species]
+            // this.I2P[pokemon.species]
             return this.fixVariantPokemonNames(this.I2P, pokemon.species)                
         }
 
     }
 
      getFusedSpeciesName(speciesAName, speciesBName) {
-        const fragAPattern = /([a-z]{2}.*?[aeiou(?:y$)\-\']+)(.*?)$/i;
-        const fragBPattern = /([a-z]{2}.*?[aeiou(?:y$)\-\'])(.*?)$/i;
+        const fragAPattern = /([a-z]{2}.*?[aeiou(?:y$)\-']+)(.*?)$/i;
+        const fragBPattern = /([a-z]{2}.*?[aeiou(?:y$)\-'])(.*?)$/i;
 
         const [ speciesAPrefixMatch, speciesBPrefixMatch ] = [ speciesAName, speciesBName ].map(n => /^(?:[^ ]+) /.exec(n));
         const [ speciesAPrefix, speciesBPrefix ] = [ speciesAPrefixMatch, speciesBPrefixMatch ].map(m => m ? m[0] : '');
@@ -502,8 +502,8 @@ class PokemonMapperClass{
         const splitNameA = speciesAName.split(/ /g);
         const splitNameB = speciesBName.split(/ /g);
 
-        let fragAMatch = fragAPattern.exec(speciesAName);
-        let fragBMatch = fragBPattern.exec(speciesBName);
+        const fragAMatch = fragAPattern.exec(speciesAName);
+        const fragBMatch = fragBPattern.exec(speciesBName);
         let fragA;
         let fragB;
 
@@ -515,7 +515,7 @@ class PokemonMapperClass{
             if (fragBMatch) {
                 const lastCharA = fragA.slice(fragA.length - 1);
                 const prevCharB = fragBMatch[1].slice(fragBMatch.length - 1);
-                fragB = (/[\-']/.test(prevCharB) ? prevCharB : '') + fragBMatch[2] || prevCharB;
+                fragB = (/[-']/.test(prevCharB) ? prevCharB : '') + fragBMatch[2] || prevCharB;
                 if (lastCharA === fragB[0]) {
                     if (/[aiu]/.test(lastCharA))
                         fragB = fragB.slice(1);
@@ -556,7 +556,7 @@ class PokemonMapperClass{
                 // turns something like GALAR_FARFETCHD into FARFETCHD-GALAR, which is the correct pokemon identifier used by pokeapi
                 const splits = pokemonIdentifier.split('_');
                 let newIdentifier = '';
-                for (let i in splits) {
+                for (const i in splits) {
                     if (i > 0) {
                         newIdentifier += splits[i] + '-';
                     }
