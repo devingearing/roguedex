@@ -725,6 +725,131 @@ function createSidebarTypeEffectivenessWrapper(typeEffectivenesses) {
     return typesHTML;
 }
 
+function createSidebarTypeEffectivenessWrapperCompact(typeEffectivenesses, itemsPerRow = 5) {
+    const urlPrefix = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/sword-shield';
+    const typeItemList = [];
+    let globalCounter = 0;
+
+    Object.keys(typeEffectivenesses).forEach((effectiveness) => {
+        const effectivenessObj = typeEffectivenesses[effectiveness];
+        if (!effectivenessObj || (!effectivenessObj.normal?.length && !effectivenessObj.double?.length)) return;
+        if (effectiveness === "cssClasses") return; // Skip if effectiveness is not equal to cssClass
+
+        // Order of arrays determines order of types, keep the double array in front.
+        const allTypes = [
+            ...(effectivenessObj.double || []),
+            ...(effectivenessObj.normal || [])
+        ];
+
+        allTypes.forEach((type) => {
+            const tempListItem = {
+                iconCssClasses: `pokemon-type-icon ${getTypeEffectivenessCssClass(type, typeEffectivenesses)}`,
+                typeEffectiveness: effectiveness,
+                iconUrl: `${urlPrefix}/${Types[type]}.png`,
+                wrapperCssClasses: `type-effectiveness-category pokemon-type-${effectiveness}`,
+                order: (globalCounter % itemsPerRow) + 1
+            };
+
+            typeItemList.push(tempListItem);
+            globalCounter++;
+        });
+    });
+
+    let typeRowsHTML = '';
+    let rowCounter = 0;
+
+    /* 
+    *   Create a "snaking" flow of items, (left to right => right to left => repeat)
+    */
+    typeItemList.forEach((item, counter) => {
+        /* first item in block, open wrapper div */
+        if (item.order === 1) {
+            typeRowsHTML += '<div class="type-effectiveness-row">';
+            rowCounter++;
+        }
+
+        let firstOfType = '';
+        if (counter > 0) {
+            if (typeItemList[counter - 1].typeEffectiveness !== item.typeEffectiveness) {
+                firstOfType = 'first-of-type-category';
+            }
+        } else {
+            firstOfType = 'first-of-type-category';
+        }
+
+        let lastOfType = '';
+        if ((counter + 1) < typeItemList.length) {
+            if (typeItemList[counter + 1].typeEffectiveness !== item.typeEffectiveness) {
+                lastOfType = 'last-of-type-category';
+            }
+        } else {
+            lastOfType = 'last-of-type-category';
+        }
+
+        let transparencyClasses = '';
+        /* Continue category into next row. */
+        if (!lastOfType && !firstOfType && item.order === itemsPerRow) {
+            transparencyClasses += ' transp-bottom transp-left ';
+        }
+        /* Even row, don't continue category into next row. */
+        else if (lastOfType && item.order === itemsPerRow && (rowCounter % 2 === 1)) {
+            transparencyClasses += ' transp-left ';
+        }
+        /* Uneven row, don't continue category into next row. */
+        else if (lastOfType && item.order === itemsPerRow && (rowCounter % 2 === 0)) {
+            transparencyClasses += ' transp-right ';
+        }
+        /* Start category, continue it into next row. */
+        else if (firstOfType && item.order === itemsPerRow) {
+            transparencyClasses += ' transp-bottom ';
+        }
+        /* End category with multiple items in this row. */
+        else if (lastOfType && !firstOfType && item.order === itemsPerRow) {
+            transparencyClasses += ' transp-left ';
+        }
+        /* Inbetween items that don't start or end a category. */
+        else if (!lastOfType && !firstOfType && item.order > 1 && item.order < itemsPerRow) {
+            transparencyClasses = ' transp-left transp-right ';
+        }
+        /* Even row, end of row item, don't continue into next row. */
+        else if (item.order === itemsPerRow && (rowCounter % 2 === 1)) {
+            transparencyClasses += ' transp-left ';
+        }
+        /* Uneven row, start of row item, continue category. */
+        else if (!lastOfType && item.order === 1 && (rowCounter % 2 === 0)) {
+            transparencyClasses += ' transp-left ';
+        }
+        /* Even row, inbetween items that end a category. */
+        else if (lastOfType && item.order > 1 && item.order < itemsPerRow && (rowCounter % 2 === 1)) {
+            transparencyClasses = ' transp-left ';
+        }
+        /* Uneven row, inbetween items that end a category. */
+        else if (lastOfType && item.order > 1 && item.order < itemsPerRow && (rowCounter % 2 === 0)) {
+            transparencyClasses = ' transp-right ';
+        } else if (firstOfType && (rowCounter % 2 === 1)) {
+            transparencyClasses += ' transp-right ';
+        } else if (firstOfType && (rowCounter % 2 === 0)) {
+            transparencyClasses += ' transp-left ';
+        }
+
+        typeRowsHTML += `<div class="${item.wrapperCssClasses} ${firstOfType} ${lastOfType} ${transparencyClasses}" data-order="${item.order}">`;
+        typeRowsHTML += `<div class="${item.iconCssClasses}" style="background-image: url('${item.iconUrl}')"></div>`;
+        typeRowsHTML += '</div>';
+
+        /* last item in block, close wrapper div */
+        if (item.order === itemsPerRow || (counter + 1) >= typeItemList.length) {
+            typeRowsHTML += '</div>';
+        }
+    });
+
+    const typesHTML = `
+        <div class="type-effectiveness-block">
+            ${typeRowsHTML}
+        </div>
+    `;
+    return typesHTML;
+}
+
 /*
     Updates party information for both sides (allies, enemies) in the sidebar.    
 */
@@ -769,7 +894,10 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
                         </div>
 
                     </div>
-                    <div class="pokemon-type-effectiveness-wrapper">
+                    <div class="pokemon-type-effectiveness-wrapper compact">
+                        ${createSidebarTypeEffectivenessWrapperCompact(pokemon.typeEffectiveness)}
+                    </div>
+                    <div class="pokemon-type-effectiveness-wrapper" style="display: none">
                         ${createSidebarTypeEffectivenessWrapper(pokemon.typeEffectiveness)}
                     </div>
                     <div class="pokemon-info-text-wrapper">

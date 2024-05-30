@@ -387,6 +387,90 @@ body.sidebar-Bottom {
 .pokemon-moveset-wrapper .pokemon-move-name.move-stellar { color: white; }
 
 
+/* Compact sidebar type-effectiveness display */
+
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .type-effectiveness-category {
+    border-width: var(--type-effectiveness-border-width);
+    max-width: inherit;
+    display: flex;
+    flex-wrap: wrap;
+    min-height: calc(var(--icon-size) * 1);
+    border-radius: 0;
+
+    position: relative;
+    padding: 0.1em 0.1em 0.1em 0.1em;
+
+    min-width: fit-content;
+    width: fit-content;
+    border-width: 1px;
+    border-style: solid;    
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .pokemon-type-weaknesses {
+    background: #810e0e;
+    border: 1px solid rgb(192, 2, 2);
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .pokemon-type-resistances {
+    background: rgba(13,154,2,1);
+    border: 1px solid rgb(14, 207, 1);
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .pokemon-type-immunities {
+    background: rgb(97, 96, 96);
+    border: 1px solid rgb(148, 148, 148);
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .type-effectiveness-category:before {
+    display: none;
+    width: 1em;
+    margin-right: 1em;
+    vertical-align: middle;
+    text-align: center;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .pokemon-type-weaknesses::before {
+    content: ' ';
+    background-color: rgb(36,0,0);
+    border-color: 1px solid rgb(192, 2, 2);
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .pokemon-type-resistances::before {
+    content: ' ';
+    background-color: rgb(0,36,7);
+    border-color: 1px solid rgb(14, 207, 1);
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .pokemon-type-immunities::before {
+    content: ' ';
+    background-color: rgb(68,68,68);
+    border-color: 1px solid rgb(148, 148, 148);
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .type-effectiveness-block {
+    display: flex;
+    flex-direction: column;
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .type-effectiveness-row {
+    display: flex;
+    justify-content: flex-start;
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .type-effectiveness-row:nth-child(2n) {
+    flex-direction: row-reverse;
+    justify-content: end;
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .type-effectiveness-row:nth-child(2n) .type-effectiveness-category {
+    border-top: none !important;
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact  .transp-right {
+    border-right-color: transparent !important;
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact  .transp-bottom {
+    border-bottom-color: transparent !important;
+}
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact  .transp-left {
+    border-left-color: transparent !important;
+}
+
 
 /* change view for trainer battles */
 .pokemon-entry.condensed {
