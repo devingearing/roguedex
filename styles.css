@@ -388,6 +388,18 @@ body.sidebar-Bottom {
 
 
 /* Compact sidebar type-effectiveness display */
+.roguedex-sidebar.compactTypeDisplay .pokemon-type-effectiveness-wrapper.compact {
+    display: table-cell;
+}
+.roguedex-sidebar.defaultTypeDisplay .pokemon-type-effectiveness-wrapper.compact {
+    display: none;
+}
+.roguedex-sidebar.defaultTypeDisplay .pokemon-type-effectiveness-wrapper.default {
+    display: table-cell;
+}
+.roguedex-sidebar.compactTypeDisplay .pokemon-type-effectiveness-wrapper.default {
+    display: none;
+}
 
 .roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .type-effectiveness-category {
     border-width: var(--type-effectiveness-border-width);
@@ -449,6 +461,7 @@ body.sidebar-Bottom {
 .roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .type-effectiveness-block {
     display: flex;
     flex-direction: column;
+    width: fit-content;
 }
 .roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .type-effectiveness-row {
     display: flex;
@@ -477,6 +490,13 @@ body.sidebar-Bottom {
 	display: table-cell;
     border: 1px solid black;
 }
+.pokemon-entry.condensed .pokemon-type-effectiveness-wrapper.compact {
+    display: none !important;
+}
+.pokemon-entry.condensed .pokemon-type-effectiveness-wrapper {
+    display: contents !important;
+}
+
 .pokemon-entry.condensed .pokemon-entry-image {
     display: block;
     text-align: center;

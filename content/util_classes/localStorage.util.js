@@ -64,7 +64,7 @@ class LocalStorageClass {   // eslint-disable-line no-unused-vars
 
     async getExtensionSettings() {
         return new Promise((resolve) => {
-            browserApi.storage.sync.get(['showMinified', 'scaleFactor', 'showEnemies', 'showParty', 'showSidebar', 'sidebarPosition', 'sidebarScaleFactor'], (data) => {
+            browserApi.storage.sync.get(['showMinified', 'scaleFactor', 'showEnemies', 'showParty', 'showSidebar', 'sidebarPosition', 'sidebarScaleFactor', 'sidebarCompactTypes'], (data) => {
                 if (data.showMinified === undefined) {
                     browserApi.storage.sync.set({ 'showMinified': false });
                     data.showMinified = false;
@@ -92,6 +92,10 @@ class LocalStorageClass {   // eslint-disable-line no-unused-vars
                 if (data.sidebarScaleFactor === undefined) {
                     browserApi.storage.sync.set({ 'sidebarScaleFactor': 1 });
                     data.sidebarScaleFactor = 1;
+                }
+                if (data.sidebarCompactTypes === undefined) {
+                    browserApi.storage.sync.set({ 'sidebarCompactTypes': false });
+                    data.sidebarCompactTypes = false;
                 }
                 resolve(data);
             });

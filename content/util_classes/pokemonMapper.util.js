@@ -23,7 +23,7 @@ class PokemonMapperClass{
     }
 
     static #calculateInverseMap(map){
-        console.log(map);
+        // console.log(map);
         const returnMap = {};
         for (const [key, value] of Object.entries(map)) {
             returnMap[value] = key;
@@ -72,11 +72,13 @@ class PokemonMapperClass{
             friendship: pokemon.friendship,
             level: pokemon.level,
             luck: pokemon.luck,
+            fusionLuck: pokemon.fusionLuck,
+            natureOverride: pokemon.natureOverride,
         }));
     }
     
     static async #getPokeType(id) {
-        console.log(id);
+        // console.log(id);
         const maxRetries = 3;
         let attempts = 0;
         while (attempts < maxRetries) {
@@ -149,8 +151,8 @@ class PokemonMapperClass{
             }
             else {
                 const { weaknesses, resistances, immunities } = await PokemonMapperClass.#calculateTypeEffectiveness($this, types);
-                console.log("single type");
-                console.log(weaknesses, resistances, immunities);
+                // console.log("single type");
+                // console.log(weaknesses, resistances, immunities);
                 return {
                     'weaknesses': {normal: [...weaknesses]},
                     'resistances': {normal: [...resistances]},
@@ -247,8 +249,8 @@ class PokemonMapperClass{
 
             // at least 1 type is immune => immune
             if (defenderType1 === 0 || defenderType2 === 0) {
-                console.log("AT");
-                console.log(attackerType);
+                // console.log("AT");
+                // console.log(attackerType);
                 immunities.normal.push(attackerType)
                 cssClasses[attackerType] = 'no-dmg'
                 
@@ -409,7 +411,7 @@ class PokemonMapperClass{
                     finalType.push(fusionTypes[0]);
                 }
             }
-            console.log(finalType);
+            // console.log(finalType);
             return await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, null, finalType)
         }
     }
@@ -417,7 +419,7 @@ class PokemonMapperClass{
     async getPokemonArray(pokemonData, arena) {
         const $this = this;
         const pokemonArray = PokemonMapperClass.#mapPartyToPokemonArray(pokemonData);
-        console.log(pokemonArray);
+        // console.log(pokemonArray);
         let frontendPokemonArray = [];
         let weather = {};
 
@@ -431,9 +433,10 @@ class PokemonMapperClass{
         const pokemonPromises = pokemonArray.map(async (pokemon) => {
             const pokemonId = $this.fixVariantPokemonNames($this.I2P, pokemon.species).toLocaleLowerCase();
             const fusionId = $this.fixVariantPokemonNames($this.I2P, pokemon.fusionSpecies)?.toLocaleLowerCase();
-            console.log(pokemonId)
+            // console.log(pokemonId)
             // const pokemonId = $this.I2P[$this.convertPokemonId(pokemon.species)].toLocaleLowerCase();
             const moveset = await PokemonMapperClass.#getPokemonTypeMoveset($this.MoveList, pokemonId, pokemon.moveset);
+            console.log(pokemonId, fusionId, pokemon)
             const typeEffectiveness = await PokemonMapperClass.#getFullTypeEffectivenessAllCases($this, pokemonId, fusionId);
             const basePokemon = $this.findBasePokemon($this.I2P[pokemon.species]);
             const name = $this.getPokemonName(pokemon);
@@ -457,6 +460,7 @@ class PokemonMapperClass{
                 friendship: pokemon.friendship,
                 level: pokemon.level,
                 luck: pokemon.luck,
+                fusionLuck: pokemon.fusionLuck,
             };
         });
 

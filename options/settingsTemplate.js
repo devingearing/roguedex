@@ -38,7 +38,7 @@ const settingsTemplate = {
     },
     6: {
         text: "Sidebar Position",
-        options: ["Left", "Right" /*,"Top", "Bottom"*/],
+        options: ["Left", "Right"],
         localStorage: "sidebarPosition",
         type: "String"
     },
@@ -48,7 +48,22 @@ const settingsTemplate = {
         appendText: "x",
         localStorage: "sidebarScaleFactor",
         type: "Float"
+    },
+    8: {
+        text: "Sidebar Compact Types",
+        options: ["No", "Yes"],
+        localStorage: "sidebarCompactTypes",
+        type: "Bool"
     }
+    /*,
+    9: {
+        text: "Sidebar Width",
+        options: ["20", "25", "30", "35", "40"],
+        appendText: "%",
+        localStorage: "sidebarWidth",
+        type: "Int"
+    }
+    */
 };
 
 export default settingsTemplate;

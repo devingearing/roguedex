@@ -67,6 +67,7 @@ class OptionsManager {
         const showSidebar = document.querySelector('.option[data-setting="showSidebar"].selected').getAttribute('data-value') === 'true';
         const sidebarPosition = document.querySelector('.option[data-setting="sidebarPosition"].selected').getAttribute('data-value') === 'true';
         const sidebarScaleFactor = parseFloat(document.querySelector('.option[data-setting="sidebarScaleFactor"].selected').getAttribute('data-value'));
+        const sidebarCompactTypes = document.querySelector('.option[data-setting="sidebarCompactTypes"].selected').getAttribute('data-value') === 'true';
 
         this.browserApi.storage.sync.set({
             'showMinified': showMin,
@@ -76,7 +77,8 @@ class OptionsManager {
             'menuType': menuType,
             'showSidebar': showSidebar,
             'sidebarPosition': sidebarPosition,
-            'sidebarScaleFactor': sidebarScaleFactor
+            'sidebarScaleFactor': sidebarScaleFactor,
+            'sidebarCompactTypes': sidebarCompactTypes,
         }, () => {
             if (this.browserApi.runtime.lastError) {
                 console.error('Error saving options:', this.browserApi.runtime.lastError);
