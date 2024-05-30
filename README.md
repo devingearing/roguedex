@@ -17,6 +17,17 @@ Rogue Dex is a browser extension that connects to Pokerogue and uses PokeAPI to 
 - The extension will display Pokemon information for each round.
 - Use the data to strategize your gameplay effectively.
 
+## Devlopment
+- After cloning the repository, run `npm install` in a console/terminal (after navigating to the repo directory).
+- Husky will run pre-commit hooks if enabled, read more: https://typicode.github.io/husky/how-to.html, currently disabled.
+- `Package.json` has a bunch of scripts to lint and format code, css and html files. These can be run by a pre-commit hook or manually, for example `npm run <script name>`.
+- Eslint: for linting javascript code, config file in root dir.
+- Stylelint: for linting stylesheets, config file in root dir.
+- Prettier: for beautifying / formatting js, css and html, config file in root dir.
+- Development files should be in `src` directory.
+- Distribution code or zip files should be in `dist` directory.
+- Currently there is no automated process to copy code to `dist`, or process it, like minifiying.
+
 ## Contribution
 Feel free to contribute to this project by forking the repository, making changes, and submitting pull requests.
 
