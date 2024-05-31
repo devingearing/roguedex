@@ -47,14 +47,22 @@
         "content/maps/Pokemon_To_Id.js",
         "content/maps/weatherMap.js",
         "content/maps/PokemonEvolutions.js",
+		"content/maps/moveList.js",
+		"content/data/speciesData.js",
         "content/util_classes/pokemonMapper.util.js",
         "content/util_classes/localStorage.util.js",
+		"content/util_classes/uiController.util.js",
         "content/content.js"
       ],
       "type": "module",
       "css": ["styles.css"]
     }
   ],
+  "icons": {
+    "16": "RogueDex.png",
+    "48": "RogueDex.png",
+    "128": "RogueDex.png"
+  },
   "web_accessible_resources": [
     "inject.js",
     "injected.js",

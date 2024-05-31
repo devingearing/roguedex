@@ -11,6 +11,7 @@ class PokemonMapperClass{
         this.N2I = window.__NatureMap;
         this.I2N = null;
         this.MoveList = window.__MoveList;
+        this.SpeciesData = window.__SpeciesData;
         PokemonMapperClass.#init(this);
     }
 
@@ -74,16 +75,19 @@ class PokemonMapperClass{
             luck: pokemon.luck,
             fusionLuck: pokemon.fusionLuck,
             natureOverride: pokemon.natureOverride,
+            formIndex: pokemon.formIndex,
         }));
     }
     
-    static async #getPokeType(id) {
-        // console.log(id);
+    static async #getPokeType_old(id) {
         const maxRetries = 3;
+        const url = `https://pokeapi.co/api/v2/pokemon/${id}`;
+
         let attempts = 0;
         while (attempts < maxRetries) {
             try {
-                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+
+                const response = await fetch(`${url}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -91,7 +95,9 @@ class PokemonMapperClass{
                 const types = data.types.map(type => type.type.name);
                 return types;
             } catch (error) {
-                attempts += 1;
+                attempts += 1;                
+                // console.log(id)
+                // console.log(`${url}`)
                 console.error(`Attempt ${attempts} - Error fetching Pokémon type:`, error);
                 if (attempts >= maxRetries) {
                     console.error('Max retries reached. Failed to fetch Pokémon type.');
@@ -101,7 +107,92 @@ class PokemonMapperClass{
         }
     }
 
-    static async #getPokemonTypeMoveset(movelist, id, movesetObj) {
+    static async #getPokeType_1(id, speciesId, formIndex, $this) {   
+        // const maxRetries = 3;
+        const primaryUrl = `https://pokeapi.co/api/v2/pokemon/${id}`;
+        const fallbackUrls = [
+            `https://pokeapi.co/api/v2/pokemon-species/${id}`,
+            `https://pokeapi.co/api/v2/pokemon-form/${id}`
+        ];
+
+        async function fetchJson(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                const data = await response.json();
+                const types = data.types.map(type => type.type.name);
+                return types;
+            } catch (error) {
+                console.error(`Failed to fetch data from ${url}:`, error);
+                return null;
+            }
+        }
+    
+        // Try the primary URL first
+        const primaryData = await fetchJson(primaryUrl);
+        if (primaryData) {
+            return primaryData;
+        }
+    
+        // Try each fallback URL in order
+        for (const fallbackUrl of fallbackUrls) {
+            const fallbackData = await fetchJson(fallbackUrl);
+            if (fallbackData) {
+                return fallbackData;
+            }
+        }
+    
+        throw new Error('Failed to fetch data from the primary URL and all fallback URLs');
+    }
+
+    static async #getPokeType(id, speciesId, formIndex, $this) {   
+        // const maxRetries = 3;
+        const primaryUrl = `https://pokeapi.co/api/v2/pokemon/${id}`;
+        const fallbackUrls = [
+            `https://pokeapi.co/api/v2/pokemon-species/${id}`,
+            `https://pokeapi.co/api/v2/pokemon-form/${id}`
+        ];
+
+        try {
+            const data = await PokemonMapperClass.#fetchDataWithFallback(primaryUrl, fallbackUrls);
+            const types = data.types.map(type => type.type.name);
+            return types
+        } catch (error) {
+            return null;
+        }
+    }
+
+    static async #fetchDataWithFallback(primaryUrl, fallbackUrls) {
+        async function fetchJson(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error(`Failed to fetch data from ${url}:`, error);
+                return null;
+            }
+        }
+    
+        // Try the primary URL first
+        const primaryData = await fetchJson(primaryUrl);
+        if (primaryData) {
+            return primaryData;
+        }
+    
+        // Try each fallback URL in order
+        for (const fallbackUrl of fallbackUrls) {
+            const fallbackData = await fetchJson(fallbackUrl);
+            if (fallbackData) {
+                return fallbackData;
+            }
+        }
+    
+        throw new Error('Failed to fetch data from the primary URL and all fallback URLs');
+    }
+
+    static async #getPokemonTypeMoveset(movelist, movesetObj) {
         // https://pokeapi.co/api/v2/move/${id}
         
         /* currently does not account for g-moves and z-moves */
@@ -130,10 +221,10 @@ class PokemonMapperClass{
         return {}
     }
 
-    static async #getPokemonTypeEffectivenessDetailed($this, id, typeOverload) {
+    static async #getPokemonTypeEffectivenessDetailed($this, id, typeOverload, speciesId, formIndex) {
         let types;
         if (!typeOverload) {
-         types = await PokemonMapperClass.#getPokeType(id);
+            types = await PokemonMapperClass.#getPokeType(id, speciesId, formIndex, $this);
         }
         else{
             types = typeOverload;
@@ -346,8 +437,8 @@ class PokemonMapperClass{
 
         return { weaknesses, resistances, immunities };
     }
-
-    async getPokemonAbility(pokemonId, pokemonAbilityIndex, fusionId, fusionAbilityIndex) {
+    
+    async getPokemonAbility(pokemonId, pokemonAbilityIndex, fusionId, fusionAbilityIndex, formIndex) {
         const $this = this;
         let pokeID;
         let abilityIndex;
@@ -357,7 +448,54 @@ class PokemonMapperClass{
         }
         else{
             // pokeID = (this.I2P[pokemonId]).toLowerCase();
-            pokeID = $this.fixVariantPokemonNames($this.I2P, pokemonId).toLocaleLowerCase();
+            pokeID = $this.fixVariantPokemonNames($this.I2P, pokemonId, formIndex).toLocaleLowerCase();
+            abilityIndex = pokemonAbilityIndex;
+        }
+        
+        try {
+            const primaryUrl = `https://pokeapi.co/api/v2/pokemon/${pokeID}`;
+            const fallbackUrls = [
+                `https://pokeapi.co/api/v2/pokemon-species/${pokeID}`,
+                `https://pokeapi.co/api/v2/pokemon-form/${pokeID}`
+            ];
+            const data = await PokemonMapperClass.#fetchDataWithFallback(primaryUrl, fallbackUrls);
+            // const data = await pokemonInfo.json();
+            const abilityLength = data.abilities.length
+
+            if (abilityIndex >= abilityLength) {
+                abilityIndex = abilityLength - 1 // Pokerogue uses a "None" ability as padding when pokémon have less than 3.
+            }
+
+            const abilityName = data.abilities[abilityIndex].ability.name;
+            
+            const abilityInfo = await fetch(`https://pokeapi.co/api/v2/ability/${abilityName}`);
+            const abilityData = await abilityInfo.json();
+            return {
+                'name': abilityName.toUpperCase().replace('-', ' '),
+                'description': abilityData.flavor_text_entries[abilityData.flavor_text_entries.length - 1].flavor_text,
+                'isHidden': data.abilities[abilityIndex].is_hidden
+            }
+        } catch (error) {
+            console.error('Error fetching Pokémons ability:', error);
+            return {
+                'name': 'null',
+                'description': 'null',
+                'isHidden': false
+            }
+        }
+    }
+
+    async getPokemonAbility_old(pokemonId, pokemonAbilityIndex, fusionId, fusionAbilityIndex, formIndex) {
+        const $this = this;
+        let pokeID;
+        let abilityIndex;
+        if(fusionId){
+            pokeID = (this.I2P[fusionId]).toLowerCase();
+            abilityIndex = fusionAbilityIndex;
+        }
+        else{
+            // pokeID = (this.I2P[pokemonId]).toLowerCase();
+            pokeID = $this.fixVariantPokemonNames($this.I2P, pokemonId, formIndex).toLocaleLowerCase();
             abilityIndex = pokemonAbilityIndex;
         }
         try {
@@ -389,13 +527,13 @@ class PokemonMapperClass{
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
-    static async #getFullTypeEffectivenessAllCases($this, pokemonName, fusionName){
+    static async #getFullTypeEffectivenessAllCases($this, pokemonName, fusionName, speciesId, formIndex) {
         if(!fusionName){
-            return await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, pokemonName);
+            return await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, pokemonName, null, speciesId, formIndex);
         }
         else{
-            const baseTypes = await PokemonMapperClass.#getPokeType(pokemonName);
-            const fusionTypes = await PokemonMapperClass.#getPokeType(fusionName);
+            const baseTypes = await PokemonMapperClass.#getPokeType(pokemonName, speciesId, formIndex, $this);
+            const fusionTypes = await PokemonMapperClass.#getPokeType(fusionName, speciesId, formIndex, $this);
             const finalType = [];
             finalType.push(baseTypes[0]);
             if(fusionTypes.length > 1) {
@@ -412,7 +550,7 @@ class PokemonMapperClass{
                 }
             }
             // console.log(finalType);
-            return await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, null, finalType)
+            return await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, null, finalType, speciesId, formIndex)
         }
     }
 
@@ -431,13 +569,12 @@ class PokemonMapperClass{
         }
 
         const pokemonPromises = pokemonArray.map(async (pokemon) => {
-            const pokemonId = $this.fixVariantPokemonNames($this.I2P, pokemon.species).toLocaleLowerCase();
-            const fusionId = $this.fixVariantPokemonNames($this.I2P, pokemon.fusionSpecies)?.toLocaleLowerCase();
-            // console.log(pokemonId)
-            // const pokemonId = $this.I2P[$this.convertPokemonId(pokemon.species)].toLocaleLowerCase();
-            const moveset = await PokemonMapperClass.#getPokemonTypeMoveset($this.MoveList, pokemonId, pokemon.moveset);
-            console.log(pokemonId, fusionId, pokemon)
-            const typeEffectiveness = await PokemonMapperClass.#getFullTypeEffectivenessAllCases($this, pokemonId, fusionId);
+            const pokemonId = $this.fixVariantPokemonNames($this.I2P, pokemon.species, pokemon.formIndex).toLocaleLowerCase();            
+            const fusionId = $this.fixVariantPokemonNames($this.I2P, pokemon.fusionSpecies, pokemon.formIndex)?.toLocaleLowerCase();
+            const moveset = await PokemonMapperClass.#getPokemonTypeMoveset($this.MoveList, pokemon.moveset);            
+            // console.log(pokemonId, fusionId, pokemon)
+            // console.log(pokemonId, pokemon.species)
+            const typeEffectiveness = await PokemonMapperClass.#getFullTypeEffectivenessAllCases($this, pokemonId, fusionId, pokemon.species, pokemon.formIndex);
             const basePokemon = $this.findBasePokemon($this.I2P[pokemon.species]);
             const name = $this.getPokemonName(pokemon);
             return {
@@ -450,7 +587,7 @@ class PokemonMapperClass{
                     cssClasses: typeEffectiveness.cssClasses,
                 },
                 ivs: pokemon.ivs,
-                ability: await $this.getPokemonAbility(pokemon.species, pokemon.abilityIndex, pokemon.fusionSpecies, pokemon.fusionAbilityIndex),
+                ability: await $this.getPokemonAbility(pokemon.species, pokemon.abilityIndex, pokemon.fusionSpecies, pokemon.fusionAbilityIndex, pokemon.formIndex),
                 nature: $this.I2N[pokemon.nature],
                 basePokemon,
                 baseId: $this.P2I[basePokemon],
@@ -478,7 +615,7 @@ class PokemonMapperClass{
         }
         else{
             // this.I2P[pokemon.species]
-            return this.fixVariantPokemonNames(this.I2P, pokemon.species)                
+            return this.fixVariantPokemonNames(this.I2P, pokemon.species, pokemon.formIndex)                
         }
 
     }
@@ -541,7 +678,7 @@ class PokemonMapperClass{
         return `${speciesAPrefix || speciesBPrefix}${fragA}${fragB}${speciesBSuffix || speciesASuffix}`;
     }
 
-    fixVariantPokemonNames(I2P, pokemonSpeciesID) {
+    fixVariantPokemonNames(I2P, pokemonSpeciesID, formIndex) {
         /* 
         convertPokemonId() isn't working for a bunch of pokemon.
         At least not when trying to get the pokemon identifier/name via '$this.I2P[pokemonSpeciesID]'.
@@ -555,9 +692,16 @@ class PokemonMapperClass{
         */
         if(pokemonSpeciesID) {
             const pokemonIdentifier = I2P[pokemonSpeciesID];
+            let pokemonForm = '';
+            try {
+                let formsObj = this.SpeciesData[pokemonSpeciesID].forms[formIndex];
+                pokemonForm = formsObj.typeKey ? formsObj.typeKey : formsObj.name.toLowerCase().replace(/( mode)|( forme)/g, "");
+            } catch (error) {
+                // console.error(error)
+            }
 
             if (pokemonSpeciesID > 2018) {
-                // turns something like GALAR_FARFETCHD into FARFETCHD-GALAR, which is the correct pokemon identifier used by pokeapi
+                // turns something like GALAR_FARFETCHD into FARFETCHD-GALAR, which is the correct pokemon identifier used by pokeapi          
                 const splits = pokemonIdentifier.split('_');
                 let newIdentifier = '';
                 for (const i in splits) {
@@ -565,9 +709,11 @@ class PokemonMapperClass{
                         newIdentifier += splits[i] + '-';
                     }
                 }
-                return newIdentifier + splits[0];
+
+                newIdentifier += splits[0];
+                return pokemonForm ? (newIdentifier + '-' + pokemonForm) : newIdentifier
             } else {
-                return pokemonIdentifier
+                return pokemonForm ? (pokemonIdentifier + '-' + pokemonForm) : pokemonIdentifier
             }            
         }
         else{

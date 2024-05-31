@@ -10,6 +10,7 @@ Rogue Dex is a browser extension that connects to Pokerogue and uses PokeAPI to 
 ## Installation
 - Clone this repository to your local machine.
 - Load the extension in developer mode in your browser.
+	- `Load unpacked` -> select `src` folder of this repository if using development code, or `dist` if using distribution code (if available).
 - Launch Pokerogue and start playing to see Pokemon data in action.
 
 ## Usage
@@ -17,7 +18,7 @@ Rogue Dex is a browser extension that connects to Pokerogue and uses PokeAPI to 
 - The extension will display Pokemon information for each round.
 - Use the data to strategize your gameplay effectively.
 
-## Devlopment
+## Development
 - After cloning the repository, run `npm install` in a console/terminal (after navigating to the repo directory).
 - Husky will run pre-commit hooks if enabled, read more: https://typicode.github.io/husky/how-to.html, currently disabled.
 - `Package.json` has a bunch of scripts to lint and format code, css and html files. These can be run by a pre-commit hook or manually, for example `npm run <script name>`.
