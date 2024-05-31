@@ -532,25 +532,42 @@ class PokemonMapperClass{
             return await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, pokemonName, null, speciesId, formIndex);
         }
         else{
+            console.log(`########  OPEN BLOCK: Get full type effectiveness all cases [fused pokemon] ########`);
+            console.group();
             const baseTypes = await PokemonMapperClass.#getPokeType(pokemonName, speciesId, formIndex, $this);
             const fusionTypes = await PokemonMapperClass.#getPokeType(fusionName, speciesId, formIndex, $this);
-            const finalType = [];
-            finalType.push(baseTypes[0]);
-            if(fusionTypes.length > 1) {
-                if(fusionTypes[1] !== finalType[0]) {
-                    finalType.push(fusionTypes[1]);
+            const finalType = [];                      
+            console.log('### pokemonName, fusionName: ', [pokemonName, fusionName])
+            console.log('### speciesId, formIndex: ', [speciesId, formIndex])
+            console.log(`### baseTypes (of ${pokemonName}): `, baseTypes)
+            console.log(`### fusionTypes (of ${fusionName}): `, fusionTypes)          
+            try {
+                finalType.push(baseTypes[0]);                
+                console.log('### finalType: ', finalType[0]) 
+                if (fusionTypes.length > 1) {
+                    if (fusionTypes[1] !== finalType[0]) {
+                        finalType.push(fusionTypes[1]);
+                    } else {
+                        finalType.push(fusionTypes[0]);
+                    }
+                } else {
+                    if (fusionTypes[0] !== finalType[0]) {
+                        finalType.push(fusionTypes[0]);
+                    }
                 }
-                else{
-                    finalType.push(fusionTypes[0]);
-                }
+            } catch (error) {
+                console.error(`### Error determining types for fused pokemon (${pokemonName}, ${fusionName}, ${speciesId})`, error);
             }
-            else{
-                if(fusionTypes[0] !== finalType[0]) {
-                    finalType.push(fusionTypes[0]);
-                }
+            
+            let result = null;
+            try {
+                result = await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, null, finalType, speciesId, formIndex);
+            } catch (error) {
+                console.error(`### Error getting type details for fused pokemon (${pokemonName}, ${fusionName}, ${speciesId})`, error);
             }
-            // console.log(finalType);
-            return await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed($this, null, finalType, speciesId, formIndex)
+            console.groupEnd();
+            console.log(`########  END BLOCK: Get full type effectiveness all cases [fused pokemon] ########`);
+            return result
         }
     }
 

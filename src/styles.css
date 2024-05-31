@@ -60,6 +60,7 @@ body {
     overflow-x: hidden;
     display: none;
     box-sizing: border-box;
+    position: relative;
 }
 .roguedex-sidebar.active {
     display: block;    
@@ -90,7 +91,20 @@ body.sidebar-Bottom {
     min-width: 1em;
     min-height: 1em;
     font-size: 1.5em;
-    margin: 0.29em 0 0 0.3em;
+    margin: 0.19em 0px 0px 0.19em;
+    background-color: #5c5c5c;
+    color: white;
+    border-radius: 3px;
+    border: 1 px solid var(--sidebar-borders-color);
+}
+#go-to-options {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 1em;
+    min-height: 1em;
+    font-size: 1.5em;
+    margin: 0.14em 0.15em 0 0;
     background-color: #5c5c5c;
     color: white;
     border-radius: 3px;
@@ -293,6 +307,17 @@ body.sidebar-Bottom {
     height: var(--sidebar-img-max-height);
     width: var(--sidebar-img-max-height);
 }
+.canvas-fallback-text {
+    display: list-item;
+    padding: 0.3em;
+    position: absolute;
+    top: 20px;
+    font-size: 1.3em;
+    box-sizing: border-box;
+    max-width: 90px;
+    left: 0px;
+    color: rgb(184, 184, 184);
+}
 .pokemon-info-text-wrapper {    
     padding: 0.2em 0.2m 0.2em 0px !important;
     font-size: 1.5em;
@@ -474,6 +499,9 @@ body.sidebar-Bottom {
 .roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .type-effectiveness-row:nth-child(2n) .type-effectiveness-category {
     border-top: none !important;
 }
+.roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact .type-effectiveness-row:nth-child(n+2) .type-effectiveness-category {
+    border-top: none !important;
+}
 .roguedex-sidebar .pokemon-type-effectiveness-wrapper.compact  .transp-right {
     border-right-color: transparent !important;
 }
@@ -526,6 +554,7 @@ body.sidebar-Bottom {
     box-sizing: content-box;
     display: none;
     border-bottom: 1px solid var(--sidebar-borders-color);
+    overflow: hidden;
 }
 .roguedex-bottom-panel.sidebar-active {
     display: block;
@@ -549,8 +578,29 @@ body.sidebar-Bottom {
 .bottom-panel-weather-box {
     margin: 0.5em;
 }
-.bottom-panel-party-luck {
-    margin: 0.5em;
+.bottom-panel-party-modifiers td, .bottom-panel-enemy-modifiers td {
+    padding: 0 0.1em;
+}
+.bottom-panel-party-modifiers td:nth-child(2n), .bottom-panel-enemy-modifiers td:nth-child(2n) {
+    text-align: right;
+}
+.bottom-panel-party-modifiers td:nth-child(2), .bottom-panel-enemy-modifiers td:nth-child(2) {
+    padding-right: 0.7em;
+}
+.bottom-panel-party-modifiers, .bottom-panel-enemy-modifiers {
+    text-align: left;
+    background-color: #25272b;
+    border: 1px solid rgb(26, 25, 25);
+    float: left;
+}
+.bottom-panel-party-modifiers {
+    margin-right: 0.5em;
+}
+.bottom-panel-party-modifiers .zeroValue, .bottom-panel-enemy-modifiers .zeroValue {
+    color: rgb(104, 104, 104);
+}
+.bottom-panel-modifiers-wrapper {
+    float: left;
 }
 
 /* bottom panel end */

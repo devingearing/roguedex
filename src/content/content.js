@@ -409,6 +409,10 @@ async function getPokemonIcon(pokemon, divId) {
             });
         };
 
+        const drawFallbackText = () => {
+            canvas.parentElement.insertAdjacentHTML("beforeend", `<span class="canvas-fallback-text">${pokemon.name}</span>`);            
+        };
+
         const drawSingleImage = (image) => {
             const width = image.width;
             const height = image.height;
@@ -545,7 +549,10 @@ async function getPokemonIcon(pokemon, divId) {
                         drawSingleImage(image1);
                         console.timeEnd(`getPokemonIcon_${cacheKey}`); // End the timer
                     })
-                    .catch(error => console.error(error));
+                    .catch(error => {
+                        console.error(error);
+                        drawFallbackText();
+                    });
             }
         }
     }
@@ -681,6 +688,7 @@ function createSidebar() {
             </div>
             <div class="sidebar-enemies-box visible" id="sidebar-enemies-box"></div>
             <div class="sidebar-allies-box visible" id="sidebar-allies-box"></div>
+            <!--<button id="go-to-options">&#9881;</button>-->
         </div>
     `
     const bottomPanelHtml = `
@@ -694,8 +702,16 @@ function createSidebar() {
 
     onElementAvailable("#sidebar-switch-iv-moves", () => {
         const uiControllerSwitchIVsMovesetDisplay = new UIController(sidebarSwitchBetweenIVsAndMoveset, '#sidebar-switch-iv-moves', { bindMouse: true, bindKeyboard: false, bindGamepad: true });
-        uiControllerSwitchIVsMovesetDisplay.setBindings(null, [6, 5]) // xbox lt + rb
+        // uiControllerSwitchIVsMovesetDisplay.setBindings(null, [6, 5]) // xbox lt + rb
     });
+
+    if (document.querySelector('#go-to-options')) {
+        document.querySelector('#go-to-options').addEventListener('click', function() {
+            chrome.runtime.sendMessage({
+                action: "showOptions"
+            })
+        });
+    }
 }
 
 function createSidebarTypeEffectivenessWrapper(typeEffectivenesses) {
@@ -787,8 +803,12 @@ function createSidebarTypeEffectivenessWrapperCompact(typeEffectivenesses, items
         }
 
         let transparencyClasses = '';
+        /* Uneven row, end of row item, continue category into next row. */
+        if (!lastOfType && !firstOfType && item.order === itemsPerRow && (rowCounter % 2 === 0)) {
+            transparencyClasses += ' transp-bottom transp-right ';
+        }
         /* Continue category into next row. */
-        if (!lastOfType && !firstOfType && item.order === itemsPerRow) {
+        else if (!lastOfType && !firstOfType && item.order === itemsPerRow) {
             transparencyClasses += ' transp-bottom transp-left ';
         }
         /* Even row, don't continue category into next row. */
@@ -826,9 +846,11 @@ function createSidebarTypeEffectivenessWrapperCompact(typeEffectivenesses, items
         /* Uneven row, inbetween items that end a category. */
         else if (lastOfType && item.order > 1 && item.order < itemsPerRow && (rowCounter % 2 === 0)) {
             transparencyClasses = ' transp-right ';
-        } else if (firstOfType && (rowCounter % 2 === 1)) {
+        }
+        else if (firstOfType && (rowCounter % 2 === 1)) {
             transparencyClasses += ' transp-right ';
-        } else if (firstOfType && (rowCounter % 2 === 0)) {
+        }
+        else if (firstOfType && (rowCounter % 2 === 0)) {
             transparencyClasses += ' transp-left ';
         }
 
@@ -865,9 +887,9 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
     if ((enemyPartySize + allyPartySize) > maxPokemonForDetailedView) {
         cssClassCondensed = 'condensed';
     }
-
+    console.log(partyID, sessionData, pokemonData)
     /* Update bottom panel information. Logic will be handled in updateBottomPanel(). */
-    await updateBottomPanel(partyID, pokemonData)
+    await updateBottomPanel(partyID, pokemonData, sessionData)
 
     /* Update the sidebars header. For now only sets/removes the trainer battle label. */
     await updateSidebarHeader(isTrainerBattle);
@@ -971,10 +993,10 @@ async function sidebarSwitchBetweenIVsAndMoveset() {
     sidebarElement.classList.toggle('hideMoveset', newInfo === 'movesets');
 }
 
-async function updateBottomPanel(partyID, pokemonData) {
+async function updateBottomPanel(partyID, pokemonData, sessionData) {
     const bottomPanelElement = document.getElementById(`roguedex-bottom-panel`)
     bottomPanelElement.replaceChildren();
-    
+
     let weatherHtml = '';
     if (pokemonData.weather.type && pokemonData.weather.turnsLeft) {
         weatherHtml = `
@@ -995,16 +1017,111 @@ async function updateBottomPanel(partyID, pokemonData) {
             luckTotal += value.luck;
         })
     }
-    const luckHtml = `<div class="bottom-panel-party-luck"><span>Total Party Luck (from shinies): ${luckTotal}.</span></div>`;
-    
+
+    const modifierHtml = generateBattleModifierHtml(sessionData, luckTotal);
+
     const html = `
         <div class="roguedex-bottom-panel-content">
             <div class="roguedex-bottom-panel-header">RogueDex Bottom Panel</div>
-            ${weatherHtml}
-            ${luckHtml}
+            ${true ? '' : weatherHtml}
+            ${modifierHtml}
         </div>
     `    
     bottomPanelElement.insertAdjacentHTML("afterbegin", html);
+}
+
+function generateBattleModifierHtml(sessionData, luckTotal) {
+    function findByKeyValue_(array, key, value) {
+        if (!Array.isArray(array)) {
+            throw new TypeError('First argument must be an array');
+        }
+
+        return array.find(item => item[key] === value) || null;
+    }
+
+    function getModifier(modifiers, typeId) {
+        return findByKeyValue_(modifiers ?? [], 'typeId', typeId) ?? { stackCount: 0 };
+    }
+
+    const modifiers = {
+        expCharmNormal: getModifier(sessionData?.modifiers, 'EXP_CHARM'),
+        expCharmSuper: getModifier(sessionData?.modifiers, 'SUPER_EXP_CHARM'),
+        expShare: getModifier(sessionData?.modifiers, 'EXP_SHARE'),
+        candyJars: getModifier(sessionData?.modifiers, 'CANDY_JAR'),
+        amuletCoins: getModifier(sessionData?.modifiers, 'AMULET_COIN'),
+        shiningCharms: getModifier(sessionData?.modifiers, 'SHINY_CHARM'),
+        healingCharms: getModifier(sessionData?.modifiers, 'HEALING_CHARM'),
+        abilityCharms: getModifier(sessionData?.modifiers, 'ABILITY_CHARM')
+    };
+
+    const enemyModifiers = {
+        statusHealChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_STATUS_EFFECT_HEAL_CHANCE'),
+        dmgReduction: getModifier(sessionData?.enemyModifiers, 'ENEMY_DAMAGE_REDUCTION'),
+        attackSleepChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_ATTACK_SLEEP_CHANCE'),
+        endureChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_ENDURE_CHANCE'),
+        attackBurnChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_ATTACK_BURN_CHANCE'),
+        dmgBoost: getModifier(sessionData?.enemyModifiers, 'ENEMY_DAMAGE_BOOSTER'),
+        attackPoisonChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_ATTACK_POISON_CHANCE'),
+        attackFreezeChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_ATTACK_FREEZE_CHANCE'),
+        attackParalyzeChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_ATTACK_PARALYZE_CHANCE'),
+        heal: getModifier(sessionData?.enemyModifiers, 'ENEMY_HEAL')
+    };
+
+    const partyModifiers = [
+        { label: 'Total Party XP multiplier', value: (modifiers.expCharmNormal.stackCount * 25) + (modifiers.expCharmSuper.stackCount * 60), unit: '%' },
+        { label: 'Total Shiny Charms', value: modifiers.shiningCharms.stackCount, unit: '' },
+        { label: 'Total Party XP share', value: modifiers.expShare.stackCount * 20, unit: '%' },
+        { label: 'Healing effectiveness', value: modifiers.healingCharms.stackCount * 10, unit: '%' },
+        { label: 'Total Candy Jars', value: modifiers.candyJars.stackCount, unit: '' },
+        { label: 'Total Ability Charms', value: modifiers.abilityCharms.stackCount, unit: '' },
+        { label: 'Total Gold Rewards multiplier', value: modifiers.amuletCoins.stackCount * 20, unit: '%' },
+        { label: 'Party Luck (shinies)', value: luckTotal, unit: '' }
+    ];
+
+    const enemyModifiersList = [
+        { label: 'Status heal chance', value: enemyModifiers.statusHealChance.stackCount * 10, unit: '%' },
+        { label: 'Attack sleep chance', value: enemyModifiers.attackSleepChance.stackCount * 10, unit: '%' },
+        { label: 'Heal per turn', value: enemyModifiers.heal.stackCount * 2, unit: '%' },
+        { label: 'Attack burn chance', value: enemyModifiers.attackBurnChance.stackCount * 10, unit: '%' },
+        { label: 'Damage reduction', value: enemyModifiers.dmgReduction.stackCount * 2.5, unit: '%' },
+        { label: 'Attack poison chance', value: enemyModifiers.attackPoisonChance.stackCount * 10, unit: '%' },
+        { label: 'Damage boost', value: enemyModifiers.dmgBoost.stackCount * 5, unit: '%' },
+        { label: 'Attack freeze chance', value: enemyModifiers.attackFreezeChance.stackCount * 10, unit: '%' },
+        { label: 'Endure chance', value: enemyModifiers.endureChance.stackCount * 2.5, unit: '%' },
+        { label: 'Attack paralyze chance', value: enemyModifiers.attackParalyzeChance.stackCount * 10, unit: '%' }
+    ];
+
+    function createTable(caption, cssTag, data) {
+        let rows = '';
+        for (let i = 0; i < data.length; i += 2) {
+            const cell1 = data[i];
+            const cell2 = data[i + 1] || { label: '', value: '', unit: '' };
+            rows += `
+                <tr>
+                    <td${cell1.value == 0 ? ' class="zeroValue"' : ''}>${cell1.label}</td>
+                    <td${cell1.value == 0 ? ' class="zeroValue"' : ''}>${cell1.value}${cell1.unit}</td>
+                    <td${cell2.value == 0 ? ' class="zeroValue"' : ''}>${cell2.label}</td>
+                    <td${cell2.value == 0 ? ' class="zeroValue"' : ''}>${cell2.value}${cell2.unit}</td>
+                </tr>
+            `;
+        }
+        
+        return `
+            <table class="bottom-panel-${cssTag}-modifiers">
+                <caption>${caption}</caption>
+                ${rows}
+            </table>
+        `;
+    }
+
+    const modifierHtml = `
+        <div class="bottom-panel-modifiers-wrapper">
+            ${createTable('Ally party:', 'party', partyModifiers)}
+            ${createTable('Enemy:', 'enemy', enemyModifiersList)}
+        </div>
+    `;
+
+    return modifierHtml;
 }
 
 function deleteAllChildren(element) {
@@ -1154,9 +1271,11 @@ async function dataMapping(pokemonLocation, divId, sessionData) {
 
         if (true) {
             console.log('/*---------Pokemon mapping----------*/')
+            console.group();
             console.log('SesionData', sessionData);
             console.log('PokemonData', pokemonData);
             console.log(`${divId}: Pokemon`, pokemonData.pokemon);
+            console.groupEnd();
             console.log('/*----------------------------------*/')
         }
 

@@ -15,6 +15,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             });
 
         return true; // Will respond asynchronously
+    } else if (request.action === "showOptions") {
+        // solution #1
+        chrome.windows.create({ url: chrome.runtime.getURL("options/options.html"), type: "popup", height : 800, width : 710 });
     } else if (request.action === "fetchImage") {
         fetch(request.url)
             .then(response => response.blob())
