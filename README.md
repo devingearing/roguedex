@@ -27,6 +27,7 @@ Rogue Dex is a browser extension that connects to Pokerogue and uses PokeAPI to 
 - Prettier: for beautifying / formatting js, css and html, config file in root dir.
 - Development files should be in `src` directory.
 - Distribution code and zip files can be created with the `npm run package` script, output will be in the `dist` directory. This includes file minifying.
+- `npm run build-test` can be used to build the dist files while skipping some processes (terser, babel).
 
 ## Contribution
 Feel free to contribute to this project by forking the repository, making changes, and submitting pull requests.

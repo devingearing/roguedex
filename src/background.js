@@ -1,6 +1,15 @@
-const browserApi = typeof browser !== "undefined" ? browser : chrome; // eslint-disable-line no-unused-vars
+const browserApi = (() => {
+    if (typeof browser !== "undefined" && typeof browser.runtime !== "undefined" && typeof browser.runtime.getURL === "function") {
+        return browser; // Firefox or compatible
+    } else if (typeof chrome !== "undefined" && typeof chrome.runtime !== "undefined" && typeof chrome.runtime.getURL === "function") {
+        return chrome; // Chrome or compatible
+    } else {
+        console.error("Browser API not found or unsupported browser"); // Unsupported browser or environment
+        return null;
+    }
+})();
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+browserApi.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "fetchFusionImageHtml") {
         const { fusionId, pokemonId } = request;
 
@@ -16,8 +25,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         return true; // Will respond asynchronously
     } else if (request.action === "showOptions") {
-        // solution #1
-        chrome.windows.create({ url: chrome.runtime.getURL("options/options.html"), type: "popup", height : 800, width : 710 });
+        // Use browserApi instead of chrome
+        browserApi.windows.create({ 
+            url: browserApi.runtime.getURL("options/options.html"), 
+            type: "popup", 
+            height: 800, 
+            width: 710 
+        });
     } else if (request.action === "fetchImage") {
         fetch(request.url)
             .then(response => response.blob())
@@ -39,4 +53,3 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // Will respond asynchronously
     }
 });
-

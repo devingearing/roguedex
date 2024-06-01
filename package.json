@@ -12,8 +12,9 @@
 	},
 	"scripts": {
 		"prepare": "husky",
-		"clean": "rimraf dist",
+		"clean": "rimraf --glob dist/*",
   		"build": "npm run clean && webpack",
+		"build-test": "npm run clean && webpack --env development",
   		"package": "npm run build",
 		"check-lint:code": "npx eslint %npm_package_config_code_paths% --config eslint.config.mjs",
 		"check-format:code": "npx prettier %npm_package_config_code_paths% --config .prettierrc --check",

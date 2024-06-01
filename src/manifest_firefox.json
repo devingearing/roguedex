@@ -1,45 +1,51 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Rogue Dex",
   "version": "2.6",
   "permissions": [
     "activeTab",
     "webRequest",
-    "storage",
+    "storage"
+  ],
+  "host_permissions": [
     "https://pokerogue.net/*",
-    "https://api.pokerogue.net/*"
+    "https://api.pokerogue.net/*",
+    "https://if.daena.me/*",
+    "https://cdn.daena.me/*"
   ],
   "browser_specific_settings": {
     "gecko": {
       "id": "{46029ed0-cb54-4130-8105-fcbbed40adc1}"
     }
   },
-  "options_page": "options/options.html",
   "options_ui": {
     "page": "options/options.html",
-    "open_in_tab": false
+    "open_in_tab": false,
+	"browser_style": false
   },
-  "browser_action": {
-    "default_popup": "options/options.html",
-    "default_icon": "./RogueDex.png",
-    "default_title": "RogueDex"
+  "action": {
+    "default_popup": "options/options.html"
   },
   "background": {
-    "scripts": ["background.js"],
-    "persistent": true
+    "scripts": ["background.js"]
   },
   "content_scripts": [
     {
-      "matches": ["https://api.pokerogue.net/*", "https://pokerogue.net/*"],
-      "js" : [
+      "matches": [
+        "https://api.pokerogue.net/*",
+        "https://pokerogue.net/*"
+      ],
+      "js": [
         "inject.js"
       ],
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["https://pokerogue.net/*"],
-      "js" : [
+      "matches": [
+        "https://pokerogue.net/*"
+      ],
+      "js": [
         "content/utils.js",
         "libs/crypto-js.min.js",
         "content/maps/abilityMap.js",
@@ -47,15 +53,16 @@
         "content/maps/Pokemon_To_Id.js",
         "content/maps/weatherMap.js",
         "content/maps/PokemonEvolutions.js",
-		"content/maps/moveList.js",
-		"content/data/speciesData.js",
+        "content/maps/moveList.js",
+        "content/data/speciesData.js",
         "content/util_classes/pokemonMapper.util.js",
         "content/util_classes/localStorage.util.js",
-		"content/util_classes/uiController.util.js",
+        "content/util_classes/uiController.util.js",
         "content/content.js"
       ],
-      "type": "module",
-      "css": ["styles.css"]
+      "css": [
+        "styles.css"
+      ]
     }
   ],
   "icons": {
@@ -64,10 +71,17 @@
     "128": "RogueDex.png"
   },
   "web_accessible_resources": [
-    "inject.js",
-    "injected.js",
-    "content/*",
-    "fonts/*",
-    "images/*"
+    {
+      "resources": [
+        "inject.js",
+        "injected.js",
+        "content/*",
+        "images/*",
+        "fonts/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
   ]
 }
