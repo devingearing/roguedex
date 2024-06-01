@@ -803,7 +803,7 @@ function createSidebarTypeEffectivenessWrapperCompact(typeEffectivenesses, items
         }
 
         let transparencyClasses = '';
-        /* Uneven row, end of row item, continue category into next row. */
+        /* Even row, end of row item, continue category into next row. */
         if (!lastOfType && !firstOfType && item.order === itemsPerRow && (rowCounter % 2 === 0)) {
             transparencyClasses += ' transp-bottom transp-right ';
         }
@@ -811,11 +811,11 @@ function createSidebarTypeEffectivenessWrapperCompact(typeEffectivenesses, items
         else if (!lastOfType && !firstOfType && item.order === itemsPerRow) {
             transparencyClasses += ' transp-bottom transp-left ';
         }
-        /* Even row, don't continue category into next row. */
+        /* Unven row, don't continue category into next row. */
         else if (lastOfType && item.order === itemsPerRow && (rowCounter % 2 === 1)) {
             transparencyClasses += ' transp-left ';
         }
-        /* Uneven row, don't continue category into next row. */
+        /* Even row, don't continue category into next row. */
         else if (lastOfType && item.order === itemsPerRow && (rowCounter % 2 === 0)) {
             transparencyClasses += ' transp-right ';
         }
@@ -831,20 +831,24 @@ function createSidebarTypeEffectivenessWrapperCompact(typeEffectivenesses, items
         else if (!lastOfType && !firstOfType && item.order > 1 && item.order < itemsPerRow) {
             transparencyClasses = ' transp-left transp-right ';
         }
-        /* Even row, end of row item, don't continue into next row. */
+        /* Unven row, end of row item, don't continue into next row. */
         else if (item.order === itemsPerRow && (rowCounter % 2 === 1)) {
             transparencyClasses += ' transp-left ';
         }
-        /* Uneven row, start of row item, continue category. */
+        /* Even row, start of row item, continue category. */
         else if (!lastOfType && item.order === 1 && (rowCounter % 2 === 0)) {
             transparencyClasses += ' transp-left ';
         }
-        /* Even row, inbetween items that end a category. */
+        /* Unven row, inbetween items that end a category. */
         else if (lastOfType && item.order > 1 && item.order < itemsPerRow && (rowCounter % 2 === 1)) {
             transparencyClasses = ' transp-left ';
         }
-        /* Uneven row, inbetween items that end a category. */
+        /* Even row, inbetween items that end a category. */
         else if (lastOfType && item.order > 1 && item.order < itemsPerRow && (rowCounter % 2 === 0)) {
+            transparencyClasses = ' transp-right ';
+        }
+        /* Unven row, first of row, continue category. */
+        else if (!lastOfType && !firstOfType && item.order === 1 && (rowCounter % 2 === 1)) {
             transparencyClasses = ' transp-right ';
         }
         else if (firstOfType && (rowCounter % 2 === 1)) {
@@ -917,7 +921,8 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
 
                     </div>
                     <div class="pokemon-type-effectiveness-wrapper compact">
-                        ${createSidebarTypeEffectivenessWrapperCompact(pokemon.typeEffectiveness)}
+                        ${/* We want to have no more than 3 rows, increase columns if over 15 types to display. */''}
+                        ${createSidebarTypeEffectivenessWrapperCompact(pokemon.typeEffectiveness, Object.keys(pokemon.typeEffectiveness.cssClasses).length > 15 ? 6 : 5 )}
                     </div>
                     <div class="pokemon-type-effectiveness-wrapper default">
                         ${createSidebarTypeEffectivenessWrapper(pokemon.typeEffectiveness)}
@@ -1044,6 +1049,7 @@ function generateBattleModifierHtml(sessionData, luckTotal) {
     }
 
     const modifiers = {
+        expCharmGold: getModifier(sessionData?.modifiers, 'GOLDEN_EXP_CHARM'),
         expCharmNormal: getModifier(sessionData?.modifiers, 'EXP_CHARM'),
         expCharmSuper: getModifier(sessionData?.modifiers, 'SUPER_EXP_CHARM'),
         expShare: getModifier(sessionData?.modifiers, 'EXP_SHARE'),
@@ -1068,7 +1074,7 @@ function generateBattleModifierHtml(sessionData, luckTotal) {
     };
 
     const partyModifiers = [
-        { label: 'Total Party XP multiplier', value: (modifiers.expCharmNormal.stackCount * 25) + (modifiers.expCharmSuper.stackCount * 60), unit: '%' },
+        { label: 'Total Party XP multiplier', value: (modifiers.expCharmNormal.stackCount * 25) + (modifiers.expCharmSuper.stackCount * 60) + (modifiers.expCharmGold.stackCount * 100), unit: '%' },
         { label: 'Total Shiny Charms', value: modifiers.shiningCharms.stackCount, unit: '' },
         { label: 'Total Party XP share', value: modifiers.expShare.stackCount * 20, unit: '%' },
         { label: 'Healing effectiveness', value: modifiers.healingCharms.stackCount * 10, unit: '%' },

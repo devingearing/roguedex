@@ -107,58 +107,37 @@ class PokemonMapperClass{
         }
     }
 
-    static async #getPokeType_1(id, speciesId, formIndex, $this) {   
-        // const maxRetries = 3;
-        const primaryUrl = `https://pokeapi.co/api/v2/pokemon/${id}`;
-        const fallbackUrls = [
-            `https://pokeapi.co/api/v2/pokemon-species/${id}`,
-            `https://pokeapi.co/api/v2/pokemon-form/${id}`
-        ];
-
-        async function fetchJson(url) {
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                const data = await response.json();
-                const types = data.types.map(type => type.type.name);
-                return types;
-            } catch (error) {
-                console.error(`Failed to fetch data from ${url}:`, error);
-                return null;
-            }
-        }
-    
-        // Try the primary URL first
-        const primaryData = await fetchJson(primaryUrl);
-        if (primaryData) {
-            return primaryData;
-        }
-    
-        // Try each fallback URL in order
-        for (const fallbackUrl of fallbackUrls) {
-            const fallbackData = await fetchJson(fallbackUrl);
-            if (fallbackData) {
-                return fallbackData;
-            }
-        }
-    
-        throw new Error('Failed to fetch data from the primary URL and all fallback URLs');
-    }
-
-    static async #getPokeType(id, speciesId, formIndex, $this) {   
-        // const maxRetries = 3;
-        const primaryUrl = `https://pokeapi.co/api/v2/pokemon/${id}`;
-        const fallbackUrls = [
-            `https://pokeapi.co/api/v2/pokemon-species/${id}`,
-            `https://pokeapi.co/api/v2/pokemon-form/${id}`
+    static async #getPokeType(id, speciesId, formIndex, $this) {
+        let identifier = id;
+        let primaryUrl = `https://pokeapi.co/api/v2/pokemon/${identifier}`;
+        let fallbackUrls = [
+            `https://pokeapi.co/api/v2/pokemon-species/${identifier}`,
+            `https://pokeapi.co/api/v2/pokemon-form/${identifier}`
         ];
 
         try {
             const data = await PokemonMapperClass.#fetchDataWithFallback(primaryUrl, fallbackUrls);
             const types = data.types.map(type => type.type.name);
             return types
-        } catch (error) {
-            return null;
+        } catch (err) {
+            /*  Lazy fallback, remove last suffix from identifier and try all api calls again.
+                Example: gyarados-normal won't work, gyarados will.
+            */
+            try {
+                let newId = identifier.replace(/-[^-]*$/g, '');
+                console.log(`Trying to remove the last suffix from ${identifier}, result: ${newId}`);
+                identifier = newId;
+                primaryUrl = `https://pokeapi.co/api/v2/pokemon/${identifier}`;
+                fallbackUrls = [
+                    `https://pokeapi.co/api/v2/pokemon-species/${identifier}`,
+                    `https://pokeapi.co/api/v2/pokemon-form/${identifier}`
+                ];
+                const data_ = await PokemonMapperClass.#fetchDataWithFallback(primaryUrl, fallbackUrls);
+                const types_ = data_.types.map(type => type.type.name);
+                return types_
+            } catch (error) {
+                return null;
+            }
         }
     }
 
