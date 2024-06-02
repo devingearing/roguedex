@@ -5,10 +5,13 @@ const contentInjectables = [
     "/content/maps/Pokemon_To_Id.js",
     "/content/maps/weatherMap.js",
     "/content/maps/moveList.js",
+    // "/content/data/moveList.js",
+    "/content/data/abilityList.js",
+    "/content/data/pokemonList.js",    
+    // "/content/data/speciesData.js",
     "/content/util_classes/pokemonMapper.util.js",
     "/content/util_classes/localStorage.util.js",
-    "/content/util_classes/uiController.util.js",
-    "/content/data/speciesData.js"
+    "/content/util_classes/uiController.util.js"
 ];
 
 class UtilsClass extends EventTarget {  // eslint-disable-line no-unused-vars

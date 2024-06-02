@@ -456,7 +456,7 @@ async function getPokemonIcon(pokemon, divId) {
             });
         };
 
-        const image1Src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
+        const image1Src = `${pokemon.sprite}`;
         const image2Src = pokemon.fusionId ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.fusionId}.png` : null;
 
         const cachedImage = imageCache[cacheKey] || Utils.LocalStorage.getImageFromCache(cacheKey);
@@ -741,10 +741,25 @@ function createSidebarTypeEffectivenessWrapper(typeEffectivenesses) {
     return typesHTML;
 }
 
-function createSidebarTypeEffectivenessWrapperCompact(typeEffectivenesses, itemsPerRow = 5) {
+function createSidebarTypeEffectivenessWrapperCompact(typeEffectivenesses, maxItemsPerRow = 5, maxRows = 4, growRowLength = true) {
     const urlPrefix = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/sword-shield';
     const typeItemList = [];
     let globalCounter = 0;
+    let itemsPerRow = maxItemsPerRow;
+    let numberOfRows = maxRows;
+    let totalNumberOfTypes = 0;
+
+    /* Determine the direction that the block should grow/expand in if a certain number of types is reached. */
+    try {
+        totalNumberOfTypes = Object.keys(typeEffectivenesses.cssClasses).length;
+    } catch (err) {}
+    while ( totalNumberOfTypes / itemsPerRow > numberOfRows ) {
+        if (growRowLength) {    // overwrite default max items per row
+            itemsPerRow++;
+        } else {                // overwrite default max rows
+            numberOfRows++;
+        }        
+    }    
 
     Object.keys(typeEffectivenesses).forEach((effectiveness) => {
         const effectivenessObj = typeEffectivenesses[effectiveness];
@@ -922,7 +937,7 @@ async function updateSidebarCards(partyID, sessionData, pokemonData) {
                     </div>
                     <div class="pokemon-type-effectiveness-wrapper compact">
                         ${/* We want to have no more than 3 rows, increase columns if over 15 types to display. */''}
-                        ${createSidebarTypeEffectivenessWrapperCompact(pokemon.typeEffectiveness, Object.keys(pokemon.typeEffectiveness.cssClasses).length > 15 ? 6 : 5 )}
+                        ${createSidebarTypeEffectivenessWrapperCompact(pokemon.typeEffectiveness, 5, 3 )}
                     </div>
                     <div class="pokemon-type-effectiveness-wrapper default">
                         ${createSidebarTypeEffectivenessWrapper(pokemon.typeEffectiveness)}
