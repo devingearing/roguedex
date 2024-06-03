@@ -484,7 +484,7 @@ async function getPokemonIcon(pokemon, divId) {
                 .catch(error => console.error(error));
         };
 
-        if (cachedImage) {
+        if (cachedImage) {            
             console.log('Using cached image');
 
             const blobUrl = cachedImage;
@@ -1285,12 +1285,13 @@ async function initCreation(sessionData) {
 }
 
 async function dataMapping(pokemonLocation, divId, sessionData) {
-    await Utils.PokeMapper.getPokemonArray(sessionData[pokemonLocation], sessionData.arena).then(async (pokemonData) => {
+    const modifiers = (pokemonLocation === "enemyParty" ? sessionData.enemyModifiers : sessionData.modifiers)
+    await Utils.PokeMapper.getPokemonArray(sessionData[pokemonLocation], sessionData.arena, modifiers).then(async (pokemonData) => {
         weather = Object.hasOwn(pokemonData, 'weather') ? pokemonData.weather : null;
         partySize[divId] = pokemonData.pokemon.length;
         const pIndex = determinePage(divId, pokemonData.pokemon);
 
-        if (true) {
+        if (false) {
             console.log('/*---------Pokemon mapping----------*/')
             console.group();
             console.log('SesionData', sessionData);

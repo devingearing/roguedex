@@ -25,8 +25,7 @@ class PokemonMapperClass{
         $this.PrevoMap = PokemonMapperClass.#calcPrevolution($this.EvoMap);
     }
 
-    static #calculateInverseMap(map){
-        // console.log(map);
+    static #calculateInverseMap(map) {
         const returnMap = {};
         for (const [key, value] of Object.entries(map)) {
             returnMap[value] = key;
@@ -34,7 +33,7 @@ class PokemonMapperClass{
         return returnMap;
     }
 
-    static #calcPrevolution(evoMapT){
+    static #calcPrevolution(evoMapT) {
         // let evoMapT = window.__EvolutionMap;
         const preEvolutions = {};
         const prevolutionKeys = Object.keys(evoMapT);
@@ -59,7 +58,7 @@ class PokemonMapperClass{
         return currentName;
     }
 
-    static #mapPartyToPokemonArray(party) {
+    static #mapPartyToPokemonArray(party, battleModifiers) {
         return party.map(pokemon => ({
             species: pokemon.species,
             abilityIndex: pokemon.abilityIndex,
@@ -78,7 +77,58 @@ class PokemonMapperClass{
             fusionLuck: pokemon.fusionLuck,
             natureOverride: pokemon.natureOverride,
             formIndex: pokemon.formIndex,
+            modifiers: PokemonMapperClass.#getPokemonModifiers(pokemon, battleModifiers),
         }));
+    }
+
+    static #getPokemonModifiers(pokemon, modifiers) {
+        const typeList = [ "NORMAL", "FIGHTING", "FLYING", "POISON", "GROUND", "ROCK", "BUG", "GHOST", "STEEL", "FIRE", "WATER", "GRASS", "ELECTRIC",
+            "PSYCHIC", "ICE", "DRAGON", "DARK", "FAIRY", "STELLAR"];
+        const berryList = ["SITRUS", "LUM", "ENIGMA", "LIECHI", "GANLON", "PETAYA", "APICOT", "SALAC", "LANSAT", "STARF", "LEPPA"];
+        const othersList = ['REVIVER_SEED', 'LEFTOVERS','LUCKY_EGG', 'GOLDEN_EGG', 'WIDE_LENS', 'SOOTHE_BELL', 'GRIP_CLAW', 'FOCUS_BAND', 'GOLDEN_PUNCH', 'SHELL_BELL', 'SOUL_DEW', 'KINGS_ROCK', 'BATON'];
+        const modifierList = {};
+        modifierList.berries = [];
+        modifierList.others = [];
+
+
+        // add black belt, silk scarf etc
+
+        /*  Go over all enemy/party battle modifiers and match which ones apply to this pokemon.
+         *  Further process some, simply push the rest.
+        */
+        modifiers.forEach((modifier) => {
+            // pokemon id as randomly assigned by the game, not the species id.
+            if (modifier?.args?.[0] === pokemon.id) {
+                if (modifier.typeId == "TERA_SHARD") {
+                    const teraState = {};
+                    teraState.typeId = modifier.typePregenArgs[0]; // modifier.args[2] should also work
+                    teraState.type = typeList[teraState.typeId];
+                    teraState.battlesLeft = modifier.args[2];
+                    teraState.stackCount = modifier.stackCount;
+                    modifierList.teraState = teraState;
+                }
+                else if (modifier.typeId == "BERRY") {
+                    const berry = {};
+                    berry.typeId = modifier.typePregenArgs[0];  // modifier.args[2] should also work
+                    berry.type = berryList[berry.typeId];
+                    berry.stackCount = modifier.stackCount;
+                    modifierList.berries.push(berry);
+                }
+                else if (othersList.includes(modifier.typeId)) {
+                    modifierList.others.push(modifier)
+                }
+            }
+        });
+        return modifierList
+    }
+
+    static #getTeraType(modifiers) {
+        // should return an array with a single string like "Water"
+        if (modifiers?.teraState?.type) {
+            return [modifiers.teraState.type.toLowerCase()]
+        } else {
+            return null;
+        }
     }
     
     static async #fetchDataWithFallback(primaryUrl, fallbackUrls) {
@@ -233,8 +283,6 @@ class PokemonMapperClass{
 
                 // at least 1 type is immune => immune
                 if (defenderType1 === 0 || defenderType2 === 0) {
-                    // console.log("AT");
-                    // console.log(attackerType);
                     immunities.normal.push(attackerType)
                     cssClasses[attackerType] = 'no-dmg'
                     
@@ -314,8 +362,11 @@ class PokemonMapperClass{
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
-    static async #getFullTypeEffectivenessAllCases(baseTypeArray, fusionTypeArray) {
-        if (fusionTypeArray) {
+    static async #getFullTypeEffectivenessAllCases(baseTypeArray, fusionTypeArray, teraTypeArray) {
+        if (teraTypeArray) {
+            return await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed(teraTypeArray);
+        }
+        else if (fusionTypeArray) {
             const newTypeArray = [baseTypeArray[0], (fusionTypeArray.length > 1 ? fusionTypeArray[1] : fusionTypeArray[0]) ];
             return await PokemonMapperClass.#getPokemonTypeEffectivenessDetailed(newTypeArray);            
         }
@@ -324,10 +375,9 @@ class PokemonMapperClass{
         }
     }
 
-    async getPokemonArray(pokemonData, arena) {
+    async getPokemonArray(pokemonData, arena, modifiers) {
         const $this = this;
-        const pokemonArray = PokemonMapperClass.#mapPartyToPokemonArray(pokemonData);
-        // console.log(pokemonArray);
+        const pokemonArray = PokemonMapperClass.#mapPartyToPokemonArray(pokemonData, modifiers);
         let frontendPokemonArray = [];
         let weather = {};
 
@@ -338,30 +388,27 @@ class PokemonMapperClass{
             };
         }
 
-        const pokemonPromises = pokemonArray.map(async (pokemon) => {           
-            const pokemonId = $this.PokemonList[pokemon.species].name;
-            // console.log("pokemonId", pokemonId)
+        const pokemonPromises = pokemonArray.map(async (pokemon) => {
+            const pokemonId = PokemonMapperClass.#getPokemonId($this, pokemon.species);
+            const speciesId = PokemonMapperClass.#getSpeciesId($this, pokemon.species);
+            const fusionSpeciesId = PokemonMapperClass.#getSpeciesId($this, pokemon.fusionSpecies);
 
-            const fusionId = $this.PokemonList[pokemon.fusionSpecies]?.name
-            // console.log("fusionId", fusionId)
+            const fusionId = $this.PokemonList[fusionSpeciesId]?.name;
 
             const moveset = await PokemonMapperClass.#getPokemonTypeMoveset($this.MoveList, pokemon.moveset);
-            // console.log("moveset", moveset)
 
-            const baseTypes = $this.PokemonList[pokemon.species]?.types;
-            const fusionTypes = $this.PokemonList[pokemon.fusionSpecies]?.types;
-            // console.log("baseTypes", baseTypes)
-            // console.log("fusionTypes", fusionTypes)
-            const typeEffectiveness = await PokemonMapperClass.#getFullTypeEffectivenessAllCases(baseTypes, fusionTypes);
-            // console.log("typeEffectiveness", typeEffectiveness)
-            
-            const basePokemon = $this.PokemonList[pokemon.species].basePokemonName;
-            const fusionPokemon = $this.PokemonList[pokemon.fusionSpecies]?.basePokemonName;            
-            const name = $this.getPokemonName(pokemon, basePokemon, fusionPokemon);
-            const pokemonSprite = $this.PokemonList[pokemon.species].sprite;
+            const baseTypes = $this.PokemonList[speciesId]?.types;
+            const fusionTypes = $this.PokemonList[fusionSpeciesId]?.types;            
+            const teraType = PokemonMapperClass.#getTeraType(pokemon.modifiers);
+            const typeEffectiveness = await PokemonMapperClass.#getFullTypeEffectivenessAllCases( baseTypes, fusionTypes, teraType );
+
+            const basePokemon = $this.PokemonList[speciesId].basePokemonName;
+            const fusionPokemon = $this.PokemonList[fusionSpeciesId]?.basePokemonName;
+            const name = $this.getPokemonName(pokemonId, fusionSpeciesId, basePokemon, fusionPokemon);
+            const pokemonSprite = $this.PokemonList[speciesId].sprite;
 
             return {
-                id: pokemon.species,
+                id: speciesId,
                 name: $this.capitalizeFirstLetter(name.toUpperCase()),
                 typeEffectiveness: {
                     weaknesses: typeEffectiveness.weaknesses,
@@ -370,18 +417,19 @@ class PokemonMapperClass{
                     cssClasses: typeEffectiveness.cssClasses,
                 },
                 ivs: pokemon.ivs,
-                ability: await $this.getPokemonAbility(pokemon.species, pokemon.abilityIndex, pokemon.fusionSpecies, pokemon.fusionAbilityIndex),
+                ability: await $this.getPokemonAbility(speciesId, pokemon.abilityIndex, fusionSpeciesId, pokemon.fusionAbilityIndex),
                 nature: $this.I2N[pokemon.nature],
                 basePokemon,
-                baseId: $this.PokemonList[pokemon.species].basePokemonId,
+                baseId: $this.PokemonList[speciesId].basePokemonId,
                 sprite: pokemonSprite,
-                fusionId: pokemon.fusionSpecies,
+                fusionId: fusionSpeciesId,
                 moveset,
                 boss: pokemon.boss,
                 friendship: pokemon.friendship,
                 level: pokemon.level,
                 luck: pokemon.luck,
                 fusionLuck: pokemon.fusionLuck,
+                modifiers: pokemon.modifiers,
             };
         });
 
@@ -390,35 +438,19 @@ class PokemonMapperClass{
         return { pokemon: frontendPokemonArray, weather };
     }
 
-    getPokemonName(pokemon, basePokemon, fusionPokemon) {
-        if(pokemon.fusionSpecies) {
-            //const nameA = this.I2P[pokemon.species];
+    getPokemonName(pokemonId, fusionSpeciesId, basePokemon, fusionPokemon) {
+        if (fusionSpeciesId) {
             const nameA = basePokemon;
-            //const nameB = this.I2P[pokemon.fusionSpecies];
             const nameB = fusionPokemon;
             return this.getFusedSpeciesName(nameA, nameB);
             // getFusedSpeciesName
         }
-        else{
-            // this.I2P[pokemon.species]
-            // return this.fixVariantPokemonNames(this.I2P, pokemon.species, pokemon.formIndex)                
+        else if (pokemonId) {
+            return pokemonId;
+        }
+        else {        
             return basePokemon;
         }
-
-    }
-
-    getPokemonName_old(pokemon) {
-        if(pokemon.fusionSpecies) {
-            const nameA = this.I2P[pokemon.species];
-            const nameB = this.I2P[pokemon.fusionSpecies];
-            return this.getFusedSpeciesName(nameA, nameB);
-            // getFusedSpeciesName
-        }
-        else{
-            // this.I2P[pokemon.species]
-            return this.fixVariantPokemonNames(this.I2P, pokemon.species, pokemon.formIndex)                
-        }
-
     }
 
      getFusedSpeciesName(speciesAName, speciesBName) {
@@ -519,6 +551,24 @@ class PokemonMapperClass{
         }
         else{
             return null;
+        }
+    }
+
+    static #getPokemonId($this, speciesId) {
+        let id = $this.PokemonList[speciesId]?.name;
+        if (!id) {
+            id = $this.PokemonList[$this.convertPokemonId(speciesId)]?.name;
+        }
+        return id
+    }
+
+    static #getSpeciesId($this, speciesId) {
+        if ($this.PokemonList[speciesId]?.name) {            
+            // if this species id returns something useful, use it
+            return speciesId;
+        } else {
+            // otherwise use the converted id
+            return $this.convertPokemonId(speciesId);
         }
     }
 
