@@ -96,7 +96,7 @@ class PokemonMapperClass{
         /*  Go over all enemy/party battle modifiers and match which ones apply to this pokemon.
          *  Further process some, simply push the rest.
         */
-        modifiers.forEach((modifier) => {
+        modifiers?.forEach((modifier) => {
             // pokemon id as randomly assigned by the game, not the species id.
             if (modifier?.args?.[0] === pokemon.id) {
                 if (modifier.typeId == "TERA_SHARD") {

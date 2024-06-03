@@ -866,6 +866,10 @@ function createSidebarTypeEffectivenessWrapperCompact(typeEffectivenesses, maxIt
         else if (!lastOfType && !firstOfType && item.order === 1 && (rowCounter % 2 === 1)) {
             transparencyClasses = ' transp-right ';
         }
+        /* Even row, first of row item that starts and ends category. */
+        else if (firstOfType && lastOfType && (rowCounter % 2 === 0)) {
+            transparencyClasses += '';
+        }
         else if (firstOfType && (rowCounter % 2 === 1)) {
             transparencyClasses += ' transp-right ';
         }
