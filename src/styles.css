@@ -547,7 +547,7 @@ body.sidebar-Bottom {
     font-size: 1.5em;  
     bottom: 0;
     position: absolute;
-    z-index: -1;
+    z-index: 0;
     background-color: var(--sidebar-bg-color);
     width: 100%;
     height: 100%;
@@ -578,29 +578,71 @@ body.sidebar-Bottom {
 .bottom-panel-weather-box {
     margin: 0.5em;
 }
-.bottom-panel-party-modifiers td, .bottom-panel-enemy-modifiers td {
+.bottom-panel-party-modifiers td, .bottom-panel-enemy-modifiers td, .bottom-panel-pokemon-modifiers td {
     padding: 0 0.1em;
 }
-.bottom-panel-party-modifiers td:nth-child(2n), .bottom-panel-enemy-modifiers td:nth-child(2n) {
+.bottom-panel-party-modifiers td:nth-child(2n), .bottom-panel-enemy-modifiers td:nth-child(2n), .bottom-panel-pokemon-modifiers td:nth-child(2n) {
     text-align: right;
 }
-.bottom-panel-party-modifiers td:nth-child(2), .bottom-panel-enemy-modifiers td:nth-child(2) {
+.bottom-panel-party-modifiers td:nth-child(2), .bottom-panel-enemy-modifiers td:nth-child(2), .bottom-panel-pokemon-modifiers td:nth-child(2) {
     padding-right: 0.7em;
 }
-.bottom-panel-party-modifiers, .bottom-panel-enemy-modifiers {
+.bottom-panel-party-modifiers, .bottom-panel-enemy-modifiers, .bottom-panel-pokemon-modifiers {
     text-align: left;
     background-color: #25272b;
     border: 1px solid rgb(26, 25, 25);
     float: left;
 }
-.bottom-panel-party-modifiers {
+.bottom-panel-party-modifiers, .bottom-panel-pokemon-modifiers {
     margin-right: 0.5em;
 }
-.bottom-panel-party-modifiers .zeroValue, .bottom-panel-enemy-modifiers .zeroValue {
+.bottom-panel-party-modifiers .zeroValue, .bottom-panel-enemy-modifiers .zeroValue, .bottom-panel-pokemon-modifiers .zeroValue {
     color: rgb(104, 104, 104);
 }
 .bottom-panel-modifiers-wrapper {
     float: left;
+}
+
+.bottom-panel-tabs {
+    margin-top: 0px;
+    color: white;
+}
+
+.bottom-panel-tab-buttons {
+    display: flex;
+    border-bottom: 1px solid var(--sidebar-borders-color);
+}
+
+.bottom-panel-tab-button {
+    padding: 5px 5px;
+    cursor: pointer;
+    background: none;
+    outline: none;
+    font-size: inherit;
+    transition: background-color 0.3s;    
+    color: white;
+    font-family: 'emerald';
+    font-size: 1em;
+
+    border: 1px solid var(--sidebar-borders-color);
+    background-color: rgb(30, 31, 34);
+}
+
+.bottom-panel-tab-button:hover {
+    background-color: rgb(44, 45, 49);
+}
+
+.bottom-panel-tab-button.active {
+    border-bottom: 2px solid #007bff;
+    background-color: rgb(39, 40, 44);
+}
+
+.bottom-panel-tab-content {
+    display: none;
+}
+
+.bottom-panel-tab-content.active {
+    display: block;
 }
 
 /* bottom panel end */

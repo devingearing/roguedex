@@ -84,14 +84,18 @@ class PokemonMapperClass{
     static #getPokemonModifiers(pokemon, modifiers) {
         const typeList = [ "NORMAL", "FIGHTING", "FLYING", "POISON", "GROUND", "ROCK", "BUG", "GHOST", "STEEL", "FIRE", "WATER", "GRASS", "ELECTRIC",
             "PSYCHIC", "ICE", "DRAGON", "DARK", "FAIRY", "STELLAR"];
+        const attackModifierList = ["silk_scarf","black_belt","sharp_beak","poison_barb","soft_sand","hard_stone","silver_powder","spell_tag","metal_coat",
+            "charcoal","mystic_water","miracle_seed","magnet","twisted_spoon","never_melt_ice","dragon_fang","black_glasses","fairy_feather"]
+
         const berryList = ["SITRUS", "LUM", "ENIGMA", "LIECHI", "GANLON", "PETAYA", "APICOT", "SALAC", "LANSAT", "STARF", "LEPPA"];
-        const othersList = ['REVIVER_SEED', 'LEFTOVERS','LUCKY_EGG', 'GOLDEN_EGG', 'WIDE_LENS', 'SOOTHE_BELL', 'GRIP_CLAW', 'FOCUS_BAND', 'GOLDEN_PUNCH', 'SHELL_BELL', 'SOUL_DEW', 'KINGS_ROCK', 'BATON'];
+        const othersList = ['REVIVER_SEED', 'LEFTOVERS','LUCKY_EGG', 'GOLDEN_EGG', 'WIDE_LENS', 'SOOTHE_BELL', 'GRIP_CLAW', 'FOCUS_BAND', 'GOLDEN_PUNCH', 'SHELL_BELL', 
+            'SOUL_DEW', 'KINGS_ROCK', 'BATON', 'SILK_SCARF', 'BLACK_BELT', 'POISON_BARB', 'SOFT_SAND', 'HARD_STONE', 'SILVER_POWDER', 'METAL_COAT', 'SPELL_TAG', 'CHARCOAL',
+            'MYSTIC_WATER', 'MIRACLE_SEED', 'MAGNET', 'TWISTED_SPOON', 'NEVER-MELT_ICE', 'DRAGON_FANG', 'BLACK_GLASSES', 'FAIRY_FEATHER', 'MINI_BLACK_HOLE', 'ATTACK_TYPE_BOOSTER'    
+        ];
         const modifierList = {};
         modifierList.berries = [];
         modifierList.others = [];
-
-
-        // add black belt, silk scarf etc
+        modifierList.attackBoosts = [];
 
         /*  Go over all enemy/party battle modifiers and match which ones apply to this pokemon.
          *  Further process some, simply push the rest.
@@ -113,6 +117,13 @@ class PokemonMapperClass{
                     berry.type = berryList[berry.typeId];
                     berry.stackCount = modifier.stackCount;
                     modifierList.berries.push(berry);
+                }
+                else if (modifier.typeId == "ATTACK_TYPE_BOOSTER") {
+                    const attackBoost = {};
+                    attackBoost.typeId = attackModifierList[modifier.typePregenArgs[0]].toUpperCase();
+                    attackBoost.id = modifier.typePregenArgs[0];
+                    attackBoost.stackCount = modifier.stackCount;
+                    modifierList.attackBoosts.push(attackBoost);
                 }
                 else if (othersList.includes(modifier.typeId)) {
                     modifierList.others.push(modifier)
@@ -375,7 +386,7 @@ class PokemonMapperClass{
         }
     }
 
-    async getPokemonArray(pokemonData, arena, modifiers) {
+    async getPokemonArray(pokemonData, arena, modifiers, pokemonLocation) {
         const $this = this;
         const pokemonArray = PokemonMapperClass.#mapPartyToPokemonArray(pokemonData, modifiers);
         let frontendPokemonArray = [];
@@ -435,7 +446,8 @@ class PokemonMapperClass{
 
         frontendPokemonArray = await Promise.all(pokemonPromises);
 
-        return { pokemon: frontendPokemonArray, weather };
+        const partyId = ( pokemonLocation == 'enemyParty' ? 'enemies' : 'allies' )
+        return { pokemon: frontendPokemonArray, weather, partyId : partyId };
     }
 
     getPokemonName(pokemonId, fusionSpeciesId, basePokemon, fusionPokemon) {

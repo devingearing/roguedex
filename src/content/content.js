@@ -1,5 +1,12 @@
-// import CryptoJS from '../libs/crypto-js.min.js';
-// import Utils from "./utils.js";
+/* Ideally only bundle/import what is used. 
+ * lit-html: https://lit.dev/
+ * Template rendering.
+ * templates and helper functions are prefixed with `window.lit.`
+*/
+const { html, render, ref, unsafeHTML, unsafeSVG, templateContent, asyncAppend, asyncReplace, until, 
+	live, guard, cache, keyed, ifDefined, range, repeat, join, map, choose, when, classMap, styleMap } = window.LitHtml;
+
+const initStates = { sidebarInitialized : false, bottomPanelInitialized : false};
 
 const runningStatusDiv = document.createElement('div')
 runningStatusDiv.textContent = 'RogueDex is running!'
@@ -13,7 +20,7 @@ function scriptInjector() {
     scriptElem.src = chrome.runtime.getURL("/content/utils.js");
     scriptElem.type = "module";
     document.head.append(scriptElem);
-    scriptElem.addEventListener("load", initUtilities);
+    scriptElem.addEventListener("load", initUtilities);    
 }
 
 let Utils;
@@ -105,7 +112,7 @@ function enableDragElement(elmnt) {
     }
 }
 
-createSidebar()
+
 const enemiesDiv = createEnemyDiv()
 const alliesDiv = createAlliesDiv()
 
@@ -348,7 +355,7 @@ function generateMovesetHTML(pokemon) {
     return html;
 }
 
-function generateIVsHTML(pokemon, dexIvs, simpleDisplay = false, addStyleClasses = false) {
+function generateIVsHTML__(pokemon, dexIvs, simpleDisplay = false, addStyleClasses = false) {
     let fullHTML = ``;
     for (const i in pokemon.ivs) {
         const curIV = pokemon.ivs[i];
@@ -564,7 +571,6 @@ async function createPokemonCardDivMinified(cardId, pokemon) {
     const savedData = Utils.LocalStorage.getPlayerData();
     const dexData = savedData.dexData;
     const dexIvs = dexData[pokemon.baseId].ivs;
-    // console.log(savedData);
     const opacityRangeMin = 10;
     const opacityRangeMax = 100;
     const pokemonImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
@@ -679,474 +685,111 @@ async function createCardsDiv(divId, pokemonData, pokemonIndex) {
     })
 }
 
-function createSidebar() {
-    const sidebarHtml = `
-        <div class="roguedex-sidebar hideIVs" id="roguedex-sidebar" data-shown-pokemon-text-info="movesets">        
-            <button id="sidebar-switch-iv-moves" class="tooltip">&#8644; ${createTooltipDiv('Switch between showing ally IVs and movesets.')}</button>
-            <div class="sidebar-header" id="sidebar-header">
-                <span>RogueDex</span>
-            </div>
-            <div class="sidebar-enemies-box visible" id="sidebar-enemies-box"></div>
-            <div class="sidebar-allies-box visible" id="sidebar-allies-box"></div>
-            <!--<button id="go-to-options">&#9881;</button>-->
-        </div>
-    `
-    const bottomPanelHtml = `
-        <div class="roguedex-bottom-panel sidebar-Left" id="roguedex-bottom-panel">
-            <div class="roguedex-bottom-panel-content">RogueDex Bottom Panel</div>
-        </div>
-    `
+/**
+ * Creates the sidebar and bottom-panel elements.
+ * Binds click controls to switch between showing IVs and movesets (optional: keyboard and gamepad). 
+ * 
+ * @param {Object} sessionData
+ */
+function createPanels(sessionData) {
+    const sidebarTemplate = window.lit.createSidebarTemplate(sessionData);
+    const bottomPanelTemplate = window.lit.createBottomPanelTemplate();
 
-    document.body.insertAdjacentHTML("afterbegin", sidebarHtml)
-    document.body.insertAdjacentHTML("beforeend", bottomPanelHtml)   
+    render(sidebarTemplate, document.body, { renderBefore: document.body.firstChild });
+    render(bottomPanelTemplate, document.body, { renderBefore: null });
 
     onElementAvailable("#sidebar-switch-iv-moves", () => {
-        const uiControllerSwitchIVsMovesetDisplay = new UIController(sidebarSwitchBetweenIVsAndMoveset, '#sidebar-switch-iv-moves', { bindMouse: true, bindKeyboard: false, bindGamepad: true });
+        const uiControllerSwitchIVsMovesetDisplay = new UIController(sidebarSwitchBetweenIVsAndMoveset, '#sidebar-switch-iv-moves', { bindMouse: true, bindKeyboard: false, bindGamepad: false });
         // uiControllerSwitchIVsMovesetDisplay.setBindings(null, [6, 5]) // xbox lt + rb
-    });
-
-    if (document.querySelector('#go-to-options')) {
-        document.querySelector('#go-to-options').addEventListener('click', function() {
-            chrome.runtime.sendMessage({
-                action: "showOptions"
-            })
-        });
-    }
+    });    
 }
 
-function createSidebarTypeEffectivenessWrapper(typeEffectivenesses) {
-    const typesHTML = `
-        ${Object.keys(typeEffectivenesses).map((effectiveness) => {
-        const effectivenessObj = typeEffectivenesses[effectiveness];
-        if (!effectivenessObj || (!effectivenessObj.normal?.length && !effectivenessObj.double?.length)) return '';
-        if (effectiveness === "cssClasses") {
-            return ''; // Skip if effectiveness is not equal to cssClass
-        }
+const generateIVsHTML = (pokemon, dexIvs, simpleDisplay = false, addStyleClasses = false) => html`
+    ${Object.keys(pokemon.ivs).map(i => {
+        const curIV = pokemon.ivs[i];
+        const dexIv = dexIvs[i];
+        const isBetter = curIV > dexIv;
+        const isWorse = curIV < dexIv;
+        const icon = isBetter ? '↑' : (isWorse ? '↓' : '-');
+        const color = isBetter ? '#00FF00' : (isWorse ? '#FF0000' : '#FFFF00');
+        const colorStyle = !simpleDisplay && !addStyleClasses ? { color: color } : {};
+        const ivValue = simpleDisplay ? curIV : html`${curIV}${icon}`;
+        const statClass = addStyleClasses ? `stat-p-colors` : '';
+        const valueClass = addStyleClasses ? `stat-c-colors` : '';
 
-        // Order of arrays determines order of types, keep the double array in front.
-        const allTypes = [
-            ...(effectivenessObj.double || []),
-            ...(effectivenessObj.normal || [])
-        ];
-
-        return `
-            <div class="pokemon-type-effectiveness-category pokemon-type-${effectiveness}">
-                ${allTypes.map((type, counter) => `
-                    <div class="pokemon-type-icon ${getTypeEffectivenessCssClass(type, typeEffectivenesses)}" style="background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/sword-shield/${Types[type]}.png')"></div>
-                `).join('')}
+        return html`
+            <div class="stat-p ${statClass}">
+                ${Stat[i]}:&nbsp;
+                <div class="stat-c ${valueClass}" style=${styleMap(colorStyle)}>${ivValue}</div>&nbsp;&nbsp;
             </div>
         `;
-    }).join('')}`;
+    })}
+`;
 
-    return typesHTML;
-}
-
-function createSidebarTypeEffectivenessWrapperCompact(typeEffectivenesses, maxItemsPerRow = 5, maxRows = 4, growRowLength = true) {
-    const urlPrefix = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/sword-shield';
-    const typeItemList = [];
-    let globalCounter = 0;
-    let itemsPerRow = maxItemsPerRow;
-    let numberOfRows = maxRows;
-    let totalNumberOfTypes = 0;
-
-    /* Determine the direction that the block should grow/expand in if a certain number of types is reached. */
-    try {
-        totalNumberOfTypes = Object.keys(typeEffectivenesses.cssClasses).length;
-    } catch (err) {}
-    while ( totalNumberOfTypes / itemsPerRow > numberOfRows ) {
-        if (growRowLength) {    // overwrite default max items per row
-            itemsPerRow++;
-        } else {                // overwrite default max rows
-            numberOfRows++;
-        }        
-    }    
-
-    Object.keys(typeEffectivenesses).forEach((effectiveness) => {
-        const effectivenessObj = typeEffectivenesses[effectiveness];
-        if (!effectivenessObj || (!effectivenessObj.normal?.length && !effectivenessObj.double?.length)) return;
-        if (effectiveness === "cssClasses") return; // Skip if effectiveness is not equal to cssClass
-
-        // Order of arrays determines order of types, keep the double array in front.
-        const allTypes = [
-            ...(effectivenessObj.double || []),
-            ...(effectivenessObj.normal || [])
-        ];
-
-        allTypes.forEach((type) => {
-            const tempListItem = {
-                iconCssClasses: `pokemon-type-icon ${getTypeEffectivenessCssClass(type, typeEffectivenesses)}`,
-                typeEffectiveness: effectiveness,
-                iconUrl: `${urlPrefix}/${Types[type]}.png`,
-                wrapperCssClasses: `type-effectiveness-category pokemon-type-${effectiveness}`,
-                order: (globalCounter % itemsPerRow) + 1
-            };
-
-            typeItemList.push(tempListItem);
-            globalCounter++;
-        });
-    });
-
-    let typeRowsHTML = '';
-    let rowCounter = 0;
-
-    /* 
-    *   Create a "snaking" flow of items, (left to right => right to left => repeat)
-    */
-    typeItemList.forEach((item, counter) => {
-        /* first item in block, open wrapper div */
-        if (item.order === 1) {
-            typeRowsHTML += '<div class="type-effectiveness-row">';
-            rowCounter++;
-        }
-
-        let firstOfType = '';
-        if (counter > 0) {
-            if (typeItemList[counter - 1].typeEffectiveness !== item.typeEffectiveness) {
-                firstOfType = 'first-of-type-category';
-            }
-        } else {
-            firstOfType = 'first-of-type-category';
-        }
-
-        let lastOfType = '';
-        if ((counter + 1) < typeItemList.length) {
-            if (typeItemList[counter + 1].typeEffectiveness !== item.typeEffectiveness) {
-                lastOfType = 'last-of-type-category';
-            }
-        } else {
-            lastOfType = 'last-of-type-category';
-        }
-
-        let transparencyClasses = '';
-        /* Even row, end of row item, continue category into next row. */
-        if (!lastOfType && !firstOfType && item.order === itemsPerRow && (rowCounter % 2 === 0)) {
-            transparencyClasses += ' transp-bottom transp-right ';
-        }
-        /* Continue category into next row. */
-        else if (!lastOfType && !firstOfType && item.order === itemsPerRow) {
-            transparencyClasses += ' transp-bottom transp-left ';
-        }
-        /* Unven row, don't continue category into next row. */
-        else if (lastOfType && item.order === itemsPerRow && (rowCounter % 2 === 1)) {
-            transparencyClasses += ' transp-left ';
-        }
-        /* Even row, don't continue category into next row. */
-        else if (lastOfType && item.order === itemsPerRow && (rowCounter % 2 === 0)) {
-            transparencyClasses += ' transp-right ';
-        }
-        /* Start category, continue it into next row. */
-        else if (firstOfType && item.order === itemsPerRow) {
-            transparencyClasses += ' transp-bottom ';
-        }
-        /* End category with multiple items in this row. */
-        else if (lastOfType && !firstOfType && item.order === itemsPerRow) {
-            transparencyClasses += ' transp-left ';
-        }
-        /* Inbetween items that don't start or end a category. */
-        else if (!lastOfType && !firstOfType && item.order > 1 && item.order < itemsPerRow) {
-            transparencyClasses = ' transp-left transp-right ';
-        }
-        /* Unven row, end of row item, don't continue into next row. */
-        else if (item.order === itemsPerRow && (rowCounter % 2 === 1)) {
-            transparencyClasses += ' transp-left ';
-        }
-        /* Even row, start of row item, continue category. */
-        else if (!lastOfType && item.order === 1 && (rowCounter % 2 === 0)) {
-            transparencyClasses += ' transp-left ';
-        }
-        /* Unven row, inbetween items that end a category. */
-        else if (lastOfType && item.order > 1 && item.order < itemsPerRow && (rowCounter % 2 === 1)) {
-            transparencyClasses = ' transp-left ';
-        }
-        /* Even row, inbetween items that end a category. */
-        else if (lastOfType && item.order > 1 && item.order < itemsPerRow && (rowCounter % 2 === 0)) {
-            transparencyClasses = ' transp-right ';
-        }
-        /* Unven row, first of row, continue category. */
-        else if (!lastOfType && !firstOfType && item.order === 1 && (rowCounter % 2 === 1)) {
-            transparencyClasses = ' transp-right ';
-        }
-        /* Even row, first of row item that starts and ends category. */
-        else if (firstOfType && lastOfType && (rowCounter % 2 === 0)) {
-            transparencyClasses += '';
-        }
-        else if (firstOfType && (rowCounter % 2 === 1)) {
-            transparencyClasses += ' transp-right ';
-        }
-        else if (firstOfType && (rowCounter % 2 === 0)) {
-            transparencyClasses += ' transp-left ';
-        }
-
-        typeRowsHTML += `<div class="${item.wrapperCssClasses} ${firstOfType} ${lastOfType} ${transparencyClasses}" data-order="${item.order}">`;
-        typeRowsHTML += `<div class="${item.iconCssClasses}" style="background-image: url('${item.iconUrl}')"></div>`;
-        typeRowsHTML += '</div>';
-
-        /* last item in block, close wrapper div */
-        if (item.order === itemsPerRow || (counter + 1) >= typeItemList.length) {
-            typeRowsHTML += '</div>';
-        }
-    });
-
-    const typesHTML = `
-        <div class="type-effectiveness-block">
-            ${typeRowsHTML}
-        </div>
-    `;
-    return typesHTML;
-}
-
-/*
-    Updates party information for both sides (allies, enemies) in the sidebar.    
-*/
-async function updateSidebarCards(partyID, sessionData, pokemonData) {
+/**
+ * Updates the sidebar cards with the provided Pokémon data.
+ * 
+ * @param {Object} sessionData - The session data containing various modifiers.
+ * @param {Object} pokemonData - The data for the Pokémon in the party.
+ */
+async function updateSidebar(sessionData, pokemonData) {
+    const partyID = pokemonData.partyId;
     const trainer = sessionData.trainer;
-    const enemyPartySize = sessionData.enemyParty.length;
-    const allyPartySize = sessionData.party.length;
     const maxPokemonForDetailedView = 8;
-    const isTrainerBattle = (trainer != null);
-    let cssClassCondensed = '';
-
-    /* Change the sidebar view to a more condensed version when more than 8 pokemon are fighting. (Olny some trianer battles) */
-    if ((enemyPartySize + allyPartySize) > maxPokemonForDetailedView) {
-        cssClassCondensed = 'condensed';
-    }
-    console.log(partyID, sessionData, pokemonData)
-    /* Update bottom panel information. Logic will be handled in updateBottomPanel(). */
-    await updateBottomPanel(partyID, pokemonData, sessionData)
+    const sidebarPartyElement = document.getElementById(`sidebar-${partyID}-box`);
+    const savedData = Utils.LocalStorage.getPlayerData();
+    const dexData = savedData.dexData;
 
     /* Update the sidebars header. For now only sets/removes the trainer battle label. */
-    await updateSidebarHeader(isTrainerBattle);
+    await updateSidebarHeader((trainer != null));
 
-    const sidebarPartyElement = document.getElementById(`sidebar-${partyID}-box`)  
-    const savedData = Utils.LocalStorage.getPlayerData()
-    const dexData = savedData.dexData
+    const partyTemplate = window.lit.createSidebarPartyTemplate(pokemonData, partyID, dexData, sessionData, maxPokemonForDetailedView);
+    render(partyTemplate, sidebarPartyElement);
 
-    sidebarPartyElement.replaceChildren();
-
-    const partyWrapperHtml = `
-        <div class="${partyID}-party">
-            <div class="sidebar-party-info" id="sidebar-${partyID}-party-info"></div>
-            ${pokemonData.pokemon.map((pokemon, counter) => `
-                <div class="pokemon-entry ${cssClassCondensed}" id="sidebar_${partyID}_${counter}">
-                    <div class="pokemon-entry-image">
-                        <canvas id="pokemon-icon_sidebar_${partyID}_${counter}" class="pokemon-entry-icon"></canvas>
-
-                        <div class="sidebar-pokemon-info tooltip" style="position: absolute; ${partyID == 'enemies' ? 'display: none;' : ''}">
-                            <span class="sidebar-pokemon-level">Lvl. ${pokemon.level}</span>
-                            <span class="sidebar-pokemon-shiny">${pokemon.shiny ? '☀' : ''}</span>
-                            <span class="sidebar-pokemon-luck">☘ ${pokemon.luck}</span>
-                            ${createTooltipDiv(`Pokemons current level: ${pokemon.level}.<br>Is shiny: ${pokemon.shiny ? 'Yes' : 'No'}.<br>Pokemon luck (shiny bonus): ${pokemon.luck}.`)}
-                        </div>
-
-                    </div>
-                    <div class="pokemon-type-effectiveness-wrapper compact">
-                        ${/* We want to have no more than 3 rows, increase columns if over 15 types to display. */''}
-                        ${createSidebarTypeEffectivenessWrapperCompact(pokemon.typeEffectiveness, 5, 3 )}
-                    </div>
-                    <div class="pokemon-type-effectiveness-wrapper default">
-                        ${createSidebarTypeEffectivenessWrapper(pokemon.typeEffectiveness)}
-                    </div>
-                    <div class="pokemon-info-text-wrapper">
-                        <div class="pokemon-ability-nature">
-                            <span class="pokemon-ability tooltip ${pokemon.ability.isHidden ? 'hidden-ability' : ''}">
-                                <span class="pokemon-ability-description">
-                                    Ability:
-                                </span>
-                                <span class="pokemon-ability-value">
-                                    ${pokemon.ability.name}
-                                </span>
-                                ${createTooltipDiv(pokemon.ability.description)}
-                            </span>                            
-                            <span class="pokemon-nature tooltip">
-                                <span class="pokemon-nature-description">
-                                    Nature:
-                                </span>
-                                <span class="pokemon-nature-value">
-                                    ${pokemon.nature}
-                                </span>
-                            </span>
-                        </div>                       
-                        
-                        <div class="pokemon-ivs stat-cont">
-                            ${partyID == 'allies' ? generateIVsHTML(pokemon, dexData[pokemon.baseId].ivs, true, true) : generateIVsHTML(pokemon, dexData[pokemon.baseId].ivs)}
-                        </div>                       
-                        
-                        <div class="pokemon-moveset-wrapper">
-                            ${partyID == 'allies' ? generateMovesetHTML(pokemon) : ''}                
-                        </div>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    `
-    sidebarPartyElement.insertAdjacentHTML("afterbegin", partyWrapperHtml)
-
-    /* Draw all pokemon icons onto the added canvas elements. */
-    pokemonData.pokemon.forEach(function (value, i) {
-        getPokemonIcon(value, `sidebar_${partyID}_${i}`)
-    })
+    pokemonData.pokemon.forEach((value, i) => {
+        getPokemonIcon(value, `sidebar_${partyID}_${i}`);
+    });
 }
 
 async function updateSidebarHeader(isTrainerBattle) {
     const sidebarHeaderElement = document.getElementById('sidebar-header');
-    sidebarHeaderElement.replaceChildren();
-
-    if (isTrainerBattle) {
-        const html = `
-            <span>RogueDex</span>
-            <span class=sidebar-header-trainer-battle>(Trainer Battle)</span>
-        `
-        sidebarHeaderElement.insertAdjacentHTML("afterbegin", html)
-    } else {
-        const html = `
-            <span>RogueDex</span>
-        `
-        sidebarHeaderElement.insertAdjacentHTML("afterbegin", html)
-    }
+    sidebarHeaderElement.innerHTML = `
+        <span>RogueDex</span>
+        ${isTrainerBattle ? '<span class="sidebar-header-trainer-battle">(Trainer Battle)</span>' : ''}
+    `;
 }
 
 async function sidebarSwitchBetweenIVsAndMoveset() {
-    console.log('Sidebar: pressed button to switch between ivs and movesets.');
     const sidebarElement = document.getElementById('roguedex-sidebar');
 
     const currentInfo = sidebarElement.dataset.shownPokemonTextInfo || 'ivs';
     const newInfo = currentInfo === 'ivs' ? 'movesets' : 'ivs';
 
     sidebarElement.dataset.shownPokemonTextInfo = newInfo;
-    sidebarElement.classList.toggle('hideIVs', newInfo === 'ivs');
-    sidebarElement.classList.toggle('hideMoveset', newInfo === 'movesets');
+    sidebarElement.classList.toggle('hideIVs', newInfo !== 'ivs');
+    sidebarElement.classList.toggle('hideMoveset', newInfo !== 'movesets');
 }
 
-async function updateBottomPanel(partyID, pokemonData, sessionData) {
-    const bottomPanelElement = document.getElementById(`roguedex-bottom-panel`)
-    bottomPanelElement.replaceChildren();
-
-    let weatherHtml = '';
-    if (pokemonData.weather.type && pokemonData.weather.turnsLeft) {
-        weatherHtml = `
-            <div class="bottom-panel-weather-box">
-                <div class="text-base">
-                    <span>Weather: ${weather.type}, Turns Left: ${weather.turnsLeft}</span>
-                </div>
-            </div>         
-        `
-    } else {
-        // delete existing weather div
-    }
-    
-    /* Calculate the allies party total luck (from shinies). */    
-    let luckTotal = 0;
-    if (partyID == 'allies') {        
-        pokemonData.pokemon.forEach(function (value, i) {
-            luckTotal += value.luck;
-        })
+/**
+ * Updates the bottom panel content (weather, global modifiers, pokemon specific modifiers).
+ * 
+ * @param {Object} sessionData - The session data containing various modifiers.
+ * @param {Object} pokemonData - The data for the Pokémon in the party.
+ */
+async function updateBottomPanel(sessionData, pokemonData) {
+    const partyID = pokemonData.partyId;
+    if (partyID == "enemies") {
+        return;
     }
 
-    const modifierHtml = generateBattleModifierHtml(sessionData, luckTotal);
+    const bottomPanelElement = document.getElementById('roguedex-bottom-panel');
 
-    const html = `
-        <div class="roguedex-bottom-panel-content">
-            <div class="roguedex-bottom-panel-header">RogueDex Bottom Panel</div>
-            ${true ? '' : weatherHtml}
-            ${modifierHtml}
-        </div>
-    `    
-    bottomPanelElement.insertAdjacentHTML("afterbegin", html);
-}
-
-function generateBattleModifierHtml(sessionData, luckTotal) {
-    function findByKeyValue_(array, key, value) {
-        if (!Array.isArray(array)) {
-            throw new TypeError('First argument must be an array');
-        }
-
-        return array.find(item => item[key] === value) || null;
-    }
-
-    function getModifier(modifiers, typeId) {
-        return findByKeyValue_(modifiers ?? [], 'typeId', typeId) ?? { stackCount: 0 };
-    }
-
-    const modifiers = {
-        expCharmGold: getModifier(sessionData?.modifiers, 'GOLDEN_EXP_CHARM'),
-        expCharmNormal: getModifier(sessionData?.modifiers, 'EXP_CHARM'),
-        expCharmSuper: getModifier(sessionData?.modifiers, 'SUPER_EXP_CHARM'),
-        expShare: getModifier(sessionData?.modifiers, 'EXP_SHARE'),
-        candyJars: getModifier(sessionData?.modifiers, 'CANDY_JAR'),
-        amuletCoins: getModifier(sessionData?.modifiers, 'AMULET_COIN'),
-        shiningCharms: getModifier(sessionData?.modifiers, 'SHINY_CHARM'),
-        healingCharms: getModifier(sessionData?.modifiers, 'HEALING_CHARM'),
-        abilityCharms: getModifier(sessionData?.modifiers, 'ABILITY_CHARM')
+    const showTab = (tabId) => {
+        window.lit.updateActiveTab(tabId);
     };
-
-    const enemyModifiers = {
-        statusHealChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_STATUS_EFFECT_HEAL_CHANCE'),
-        dmgReduction: getModifier(sessionData?.enemyModifiers, 'ENEMY_DAMAGE_REDUCTION'),
-        attackSleepChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_ATTACK_SLEEP_CHANCE'),
-        endureChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_ENDURE_CHANCE'),
-        attackBurnChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_ATTACK_BURN_CHANCE'),
-        dmgBoost: getModifier(sessionData?.enemyModifiers, 'ENEMY_DAMAGE_BOOSTER'),
-        attackPoisonChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_ATTACK_POISON_CHANCE'),
-        attackFreezeChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_ATTACK_FREEZE_CHANCE'),
-        attackParalyzeChance: getModifier(sessionData?.enemyModifiers, 'ENEMY_ATTACK_PARALYZE_CHANCE'),
-        heal: getModifier(sessionData?.enemyModifiers, 'ENEMY_HEAL')
-    };
-
-    const partyModifiers = [
-        { label: 'Total Party XP multiplier', value: (modifiers.expCharmNormal.stackCount * 25) + (modifiers.expCharmSuper.stackCount * 60) + (modifiers.expCharmGold.stackCount * 100), unit: '%' },
-        { label: 'Total Shiny Charms', value: modifiers.shiningCharms.stackCount, unit: '' },
-        { label: 'Total Party XP share', value: modifiers.expShare.stackCount * 20, unit: '%' },
-        { label: 'Healing effectiveness', value: modifiers.healingCharms.stackCount * 10, unit: '%' },
-        { label: 'Total Candy Jars', value: modifiers.candyJars.stackCount, unit: '' },
-        { label: 'Total Ability Charms', value: modifiers.abilityCharms.stackCount, unit: '' },
-        { label: 'Total Gold Rewards multiplier', value: modifiers.amuletCoins.stackCount * 20, unit: '%' },
-        { label: 'Party Luck (shinies)', value: luckTotal, unit: '' }
-    ];
-
-    const enemyModifiersList = [
-        { label: 'Status heal chance', value: enemyModifiers.statusHealChance.stackCount * 10, unit: '%' },
-        { label: 'Attack sleep chance', value: enemyModifiers.attackSleepChance.stackCount * 10, unit: '%' },
-        { label: 'Heal per turn', value: enemyModifiers.heal.stackCount * 2, unit: '%' },
-        { label: 'Attack burn chance', value: enemyModifiers.attackBurnChance.stackCount * 10, unit: '%' },
-        { label: 'Damage reduction', value: enemyModifiers.dmgReduction.stackCount * 2.5, unit: '%' },
-        { label: 'Attack poison chance', value: enemyModifiers.attackPoisonChance.stackCount * 10, unit: '%' },
-        { label: 'Damage boost', value: enemyModifiers.dmgBoost.stackCount * 5, unit: '%' },
-        { label: 'Attack freeze chance', value: enemyModifiers.attackFreezeChance.stackCount * 10, unit: '%' },
-        { label: 'Endure chance', value: enemyModifiers.endureChance.stackCount * 2.5, unit: '%' },
-        { label: 'Attack paralyze chance', value: enemyModifiers.attackParalyzeChance.stackCount * 10, unit: '%' }
-    ];
-
-    function createTable(caption, cssTag, data) {
-        let rows = '';
-        for (let i = 0; i < data.length; i += 2) {
-            const cell1 = data[i];
-            const cell2 = data[i + 1] || { label: '', value: '', unit: '' };
-            rows += `
-                <tr>
-                    <td${cell1.value == 0 ? ' class="zeroValue"' : ''}>${cell1.label}</td>
-                    <td${cell1.value == 0 ? ' class="zeroValue"' : ''}>${cell1.value}${cell1.unit}</td>
-                    <td${cell2.value == 0 ? ' class="zeroValue"' : ''}>${cell2.label}</td>
-                    <td${cell2.value == 0 ? ' class="zeroValue"' : ''}>${cell2.value}${cell2.unit}</td>
-                </tr>
-            `;
-        }
-        
-        return `
-            <table class="bottom-panel-${cssTag}-modifiers">
-                <caption>${caption}</caption>
-                ${rows}
-            </table>
-        `;
-    }
-
-    const modifierHtml = `
-        <div class="bottom-panel-modifiers-wrapper">
-            ${createTable('Ally party:', 'party', partyModifiers)}
-            ${createTable('Enemy:', 'enemy', enemyModifiersList)}
-        </div>
-    `;
-
-    return modifierHtml;
+    const template = window.lit.createBottomPanelContentTemplate(sessionData, pokemonData, showTab);
+    render(template, bottomPanelElement);
+    showTab('bottom-panel-global');
 }
 
 function deleteAllChildren(element) {
@@ -1163,18 +806,6 @@ function deleteWrapperDivs() {
         console.log(enemies);
         deleteAllChildren(enemies);
         const allies = document.getElementById("allies");
-        deleteAllChildren(allies);
-    } catch (e) {
-        console.error(e)
-    }
-}
-
-function clearSidebar() {
-    try {
-        console.log("DELETE CALLED [for sidebar]")
-        const enemies = document.getElementById("sidebar-enemies-box");
-        const allies = document.getElementById("sidebar-allies-box");
-        deleteAllChildren(enemies);
         deleteAllChildren(allies);
     } catch (e) {
         console.error(e)
@@ -1290,7 +921,7 @@ async function initCreation(sessionData) {
 
 async function dataMapping(pokemonLocation, divId, sessionData) {
     const modifiers = (pokemonLocation === "enemyParty" ? sessionData.enemyModifiers : sessionData.modifiers)
-    await Utils.PokeMapper.getPokemonArray(sessionData[pokemonLocation], sessionData.arena, modifiers).then(async (pokemonData) => {
+    await Utils.PokeMapper.getPokemonArray(sessionData[pokemonLocation], sessionData.arena, modifiers, pokemonLocation).then(async (pokemonData) => {
         weather = Object.hasOwn(pokemonData, 'weather') ? pokemonData.weather : null;
         partySize[divId] = pokemonData.pokemon.length;
         const pIndex = determinePage(divId, pokemonData.pokemon);
@@ -1307,9 +938,17 @@ async function dataMapping(pokemonLocation, divId, sessionData) {
 
         await createCardsDiv(divId, pokemonData.pokemon, pIndex).then(() => {
             scaleElements();
-        });
-        await updateSidebarCards(divId, sessionData, pokemonData);        
+        });    
         observeGameCanvasResize();
+
+        if (!initStates.sidebarInitialized) {
+            initStates.sidebarInitialized = true;
+            //createSidebar(sessionData, pokemonData);
+            createPanels(sessionData, pokemonData);
+        }       
+
+        await updateSidebar(sessionData, pokemonData);
+        await updateBottomPanel(sessionData, pokemonData);
     });
 }
 
