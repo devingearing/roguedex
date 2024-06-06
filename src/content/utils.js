@@ -7,8 +7,7 @@ const contentInjectables = [
     "/content/maps/moveList.js",
     // "/content/data/moveList.js",
     "/content/data/abilityList.js",
-    "/content/data/pokemonList.js",    
-    // "/content/data/speciesData.js",
+    "/content/data/pokemonList.js",
     "/content/util_classes/pokemonMapper.util.js",
     "/content/util_classes/localStorage.util.js",
     "/content/util_classes/uiController.util.js"
@@ -17,14 +16,14 @@ const contentInjectables = [
 class UtilsClass extends EventTarget {  // eslint-disable-line no-unused-vars
     constructor() {
         super();
-        this.PokeMapper = null; // Initialize properly
-        this.LocalStorage = null; // Initialize properly
+        this.PokeMapper = null;
+        this.LocalStorage = null;
         this.classesReady = {
             "pokemonMapper.util.js": false,
             "localStorage.util.js": false,
             "uiController.util.js": false,
         };
-        this._isReady = false; // Use a private variable for the actual value
+        this._isReady = false;
         this.index = 0;
     }
 
@@ -43,12 +42,12 @@ class UtilsClass extends EventTarget {  // eslint-disable-line no-unused-vars
         this.scriptInjector();
     }
 
-    checkIfRead() {
+    checkIfReady() {
         let isReady = true;
-        for (const cI in this.classesReady) {
-            const targetClass = this.classesReady[cI];
-            if (targetClass === false) {
+        for (const key in this.classesReady) {
+            if (!this.classesReady[key]) {
                 isReady = false;
+                break;
             }
         }
         this.isReady = isReady;
@@ -69,23 +68,19 @@ class UtilsClass extends EventTarget {  // eslint-disable-line no-unused-vars
 
         scriptElem.addEventListener("load", () => {
             console.log(`${targetScript} loaded.`);
-            if (targetScript === "/content/util_classes/pokemonMapper.util.js") {
+            if (targetScript.includes("/content/util_classes/pokemonMapper.util.js")) {
                 this.classesReady["pokemonMapper.util.js"] = true;
                 this.PokeMapper = new PokemonMapperClass();
-                this.checkIfRead();
-            } else if (targetScript === "/content/util_classes/localStorage.util.js") {
+            } else if (targetScript.includes("/content/util_classes/localStorage.util.js")) {
                 this.classesReady["localStorage.util.js"] = true;
                 this.LocalStorage = new LocalStorageClass();
-                this.checkIfRead();
-            } else if (targetScript === "/content/util_classes/uiController.util.js") {
+            } else if (targetScript.includes("/content/util_classes/uiController.util.js")) {
                 this.classesReady["uiController.util.js"] = true;
                 // this.UiController = new UIController();
-                this.checkIfRead();
-            } else {
-                console.log(`Script ${targetScript} loaded but no special handling required.`);
             }
+            this.checkIfReady();
             this.index += 1;
-            this.scriptInjector(); // Inject the next script
+            this.scriptInjector();
         });
 
         scriptElem.addEventListener("error", (e) => {

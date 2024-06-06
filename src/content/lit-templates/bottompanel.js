@@ -38,6 +38,17 @@
     };
 
     /**
+     * Returns which tab is active, or null if none is.
+     * 
+     * @function updateActiveTab
+     * @param {string} tabId - The ID of the tab to make active.
+     */
+    window.lit.getActiveTab = () => {
+        const activeTab = document.querySelector('.bottom-panel-tab-content.active');
+        return activeTab ? activeTab.id : null;
+    };
+
+    /**
      * Creates the template for the content of the bottom panel.
      * @function createBottomPanelContentTemplate
      * @param {Object} sessionData - The session data.

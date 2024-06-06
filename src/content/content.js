@@ -6,36 +6,32 @@
 const { html, render, ref, unsafeHTML, unsafeSVG, templateContent, asyncAppend, asyncReplace, until, 
 	live, guard, cache, keyed, ifDefined, range, repeat, join, map, choose, when, classMap, styleMap } = window.LitHtml;
 
-const initStates = { sidebarInitialized : false, bottomPanelInitialized : false};
+const initStates = { panelsInitialized : false };
+window.activePokemonParties = { "enemies" : {}, "allies" : {} };
 
-const runningStatusDiv = document.createElement('div')
-runningStatusDiv.textContent = 'RogueDex is running!'
-runningStatusDiv.classList.add('text-base')
-runningStatusDiv.classList.add('running-status')
-document.body.insertBefore(runningStatusDiv, document.body.firstChild);
 scriptInjector();
+addRunningStatus();
 
 function scriptInjector() {
     const scriptElem = document.createElement("script");
     scriptElem.src = chrome.runtime.getURL("/content/utils.js");
     scriptElem.type = "module";
     document.head.append(scriptElem);
-    scriptElem.addEventListener("load", initUtilities);    
+    scriptElem.addEventListener("load", initUtilities);
 }
 
-let Utils;
+function initUtilities() {
+    // Initialize and set up UtilsClass
+    window.Utils = new UtilsClass();
+    window.Utils.init();
 
-function initUtilities(e) {
-    Utils = new UtilsClass();
-    Utils.init();
-    Utils.addEventListener('isReadyChange', () => {
-        if (Utils.isReady) {
-            // Utils.LocalStorage.clearImageCache();
-            console.log("All Scripts Loaded!")
-            // touchControlListener();
+    // Listen for the 'isReadyChange' event to check if all scripts are loaded
+    window.Utils.addEventListener('isReadyChange', () => {
+        if (window.Utils.isReady) {
+            console.log("All Scripts Loaded!");
             extensionSettingsListener();
         } else {
-            console.log("Error Loading Scripts :(")
+            console.log("Error Loading Scripts :(");
         }
     });
 }
@@ -51,6 +47,14 @@ const wrapperDivPositions = {
         'left': '0',
         'opacity': '100'
     }
+}
+
+function addRunningStatus() {
+    const runningStatusDiv = document.createElement('div')
+    runningStatusDiv.textContent = 'RogueDex is running!'
+    runningStatusDiv.classList.add('text-base')
+    runningStatusDiv.classList.add('running-status')
+    document.body.insertBefore(runningStatusDiv, document.body.firstChild);
 }
 
 function createEnemyDiv(showSidebar = false) {
@@ -288,7 +292,7 @@ async function changePage(click) {
             pages[divId] = partySize[divId]
         }
     }
-    const sessionData = Utils.LocalStorage.getSessionData();
+    const sessionData = window.Utils.LocalStorage.getSessionData();
     await initCreation(sessionData);
 }
 
@@ -454,7 +458,7 @@ async function getPokemonIcon(pokemon, divId) {
                     if (response.success) {
                         const blobUrl = response.dataUrl;
                         imageCache[cacheKey] = blobUrl; // Save Blob URL to memory cache
-                        Utils.LocalStorage.saveImageToCache(cacheKey, blobUrl); // Save to local storage
+                        window.Utils.LocalStorage.saveImageToCache(cacheKey, blobUrl); // Save to local storage
                         loadImageFromBlobUrl(image, blobUrl).then(resolve).catch(reject);
                     } else {
                         reject(response.error);
@@ -466,7 +470,7 @@ async function getPokemonIcon(pokemon, divId) {
         const image1Src = `${pokemon.sprite}`;
         const image2Src = pokemon.fusionId ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.fusionId}.png` : null;
 
-        const cachedImage = imageCache[cacheKey] || Utils.LocalStorage.getImageFromCache(cacheKey);
+        const cachedImage = imageCache[cacheKey] || window.Utils.LocalStorage.getImageFromCache(cacheKey);
 
         const fallbackToSeparateImages = () => {
             Promise.all([
@@ -484,7 +488,7 @@ async function getPokemonIcon(pokemon, divId) {
                     const combinedDataUrl = combinedCanvas.toDataURL();
 
                     imageCache[cacheKey] = combinedDataUrl; // Save combined image to memory cache
-                    Utils.LocalStorage.saveImageToCache(cacheKey, combinedDataUrl); // Save combined image to local storage
+                    window.Utils.LocalStorage.saveImageToCache(cacheKey, combinedDataUrl); // Save combined image to local storage
 
                     console.timeEnd(`getPokemonIcon_${cacheKey}`); // End the timer
                 })
@@ -507,8 +511,8 @@ async function getPokemonIcon(pokemon, divId) {
         } else {
             if (pokemon.fusionId) {
                 if (!DISABLE_FUN_FUSION) {
-                    const fusionName = Utils.PokeMapper.capitalizeFirstLetter(Utils.PokeMapper.I2P[pokemon.fusionId]);
-                    const pokeName = Utils.PokeMapper.capitalizeFirstLetter(Utils.PokeMapper.I2P[pokemon.id]);
+                    const fusionName = window.Utils.PokeMapper.capitalizeFirstLetter(window.Utils.PokeMapper.I2P[pokemon.fusionId]);
+                    const pokeName = window.Utils.PokeMapper.capitalizeFirstLetter(window.Utils.PokeMapper.I2P[pokemon.id]);
 
                     chrome.runtime.sendMessage({
                         action: "fetchFusionImageHtml",
@@ -529,7 +533,7 @@ async function getPokemonIcon(pokemon, divId) {
                                         if (imageResponse.success) {
                                             const blobUrl = imageResponse.dataUrl;
                                             imageCache[cacheKey] = blobUrl; // Save Blob URL to memory cache
-                                            Utils.LocalStorage.saveImageToCache(cacheKey, blobUrl); // Save to local storage
+                                            window.Utils.LocalStorage.saveImageToCache(cacheKey, blobUrl); // Save to local storage
                                             loadImageFromBlobUrl(fusionImage, blobUrl)
                                                 .then(() => {
                                                     drawSingleImage(fusionImage);
@@ -568,7 +572,7 @@ async function getPokemonIcon(pokemon, divId) {
 
 
 async function createPokemonCardDivMinified(cardId, pokemon) {
-    const savedData = Utils.LocalStorage.getPlayerData();
+    const savedData = window.Utils.LocalStorage.getPlayerData();
     const dexData = savedData.dexData;
     const dexIvs = dexData[pokemon.baseId].ivs;
     const opacityRangeMin = 10;
@@ -659,7 +663,7 @@ async function chooseCardType(divId, pokemon, minified) {
 
 async function createCardsDiv(divId, pokemonData, pokemonIndex) {
     const pokemon = pokemonData[pokemonIndex]
-    const extensionSettings = await Utils.LocalStorage.getExtensionSettings();
+    const extensionSettings = await window.Utils.LocalStorage.getExtensionSettings();
     const newDiv = createWrapperDiv(divId, extensionSettings.showSidebar);
 
     return await chooseCardType(divId, pokemon, extensionSettings.showMinified).then(async (cardObj) => {
@@ -730,25 +734,23 @@ const generateIVsHTML = (pokemon, dexIvs, simpleDisplay = false, addStyleClasses
  * Updates the sidebar cards with the provided Pokémon data.
  * 
  * @param {Object} sessionData - The session data containing various modifiers.
- * @param {Object} pokemonData - The data for the Pokémon in the party.
+ * @param {string} partyID - The ID of the party ('allies' or 'enemies').
+ * @param {number} maxPokemonForDetailedView - The maximum number of Pokémon for detailed view.
  */
-async function updateSidebar(sessionData, pokemonData) {
-    const partyID = pokemonData.partyId;
-    const trainer = sessionData.trainer;
-    const maxPokemonForDetailedView = 8;
+async function renderSidebarPartyTemplate(sessionData, partyID, maxPokemonForDetailedView = 8) {
+    const savedData = window.Utils.LocalStorage.getPlayerData();
+    const pokeData = window.activePokemonParties[partyID];
     const sidebarPartyElement = document.getElementById(`sidebar-${partyID}-box`);
-    const savedData = Utils.LocalStorage.getPlayerData();
-    const dexData = savedData.dexData;
 
-    /* Update the sidebars header. For now only sets/removes the trainer battle label. */
-    await updateSidebarHeader((trainer != null));
+    if (pokeData?.pokemon?.length) {
+        const partyTemplate = window.lit.createSidebarPartyTemplate(pokeData, partyID, savedData.dexData, sessionData, maxPokemonForDetailedView);
+        render(partyTemplate, sidebarPartyElement);
 
-    const partyTemplate = window.lit.createSidebarPartyTemplate(pokemonData, partyID, dexData, sessionData, maxPokemonForDetailedView);
-    render(partyTemplate, sidebarPartyElement);
-
-    pokemonData.pokemon.forEach((value, i) => {
-        getPokemonIcon(value, `sidebar_${partyID}_${i}`);
-    });
+        pokeData.pokemon.forEach((value, i) => {
+            getPokemonIcon(value, `sidebar_${partyID}_${i}`);
+        });
+    }
+    await updateSidebarHeader((sessionData.trainer != null));
 }
 
 async function updateSidebarHeader(isTrainerBattle) {
@@ -789,7 +791,11 @@ async function updateBottomPanel(sessionData, pokemonData) {
     };
     const template = window.lit.createBottomPanelContentTemplate(sessionData, pokemonData, showTab);
     render(template, bottomPanelElement);
-    showTab('bottom-panel-global');
+    const activeTabId = window.lit.getActiveTab();
+
+    if (!activeTabId) {
+        showTab('bottom-panel-global');
+    }
 }
 
 function deleteAllChildren(element) {
@@ -905,7 +911,7 @@ async function switchSidebarTypesDisplay(state) {
 
 async function initCreation(sessionData) {
     deleteWrapperDivs();
-    const extensionSettings = await Utils.LocalStorage.getExtensionSettings();
+    const extensionSettings = await window.Utils.LocalStorage.getExtensionSettings();
     if (extensionSettings.showEnemies) {
         await dataMapping("enemyParty", "enemies", sessionData);
     }
@@ -920,8 +926,8 @@ async function initCreation(sessionData) {
 }
 
 async function dataMapping(pokemonLocation, divId, sessionData) {
-    const modifiers = (pokemonLocation === "enemyParty" ? sessionData.enemyModifiers : sessionData.modifiers)
-    await Utils.PokeMapper.getPokemonArray(sessionData[pokemonLocation], sessionData.arena, modifiers, pokemonLocation).then(async (pokemonData) => {
+    const modifiers = (pokemonLocation === "enemyParty" ? sessionData.enemyModifiers : sessionData.modifiers);
+    await window.Utils.PokeMapper.getPokemonArray(sessionData[pokemonLocation], sessionData.arena, modifiers, pokemonLocation).then(async (pokemonData) => {
         weather = Object.hasOwn(pokemonData, 'weather') ? pokemonData.weather : null;
         partySize[divId] = pokemonData.pokemon.length;
         const pIndex = determinePage(divId, pokemonData.pokemon);
@@ -941,13 +947,14 @@ async function dataMapping(pokemonLocation, divId, sessionData) {
         });    
         observeGameCanvasResize();
 
-        if (!initStates.sidebarInitialized) {
-            initStates.sidebarInitialized = true;
-            //createSidebar(sessionData, pokemonData);
-            createPanels(sessionData, pokemonData);
-        }       
+        if (!initStates.panelsInitialized) {
+            initStates.panelsInitialized = true;
+            createPanels(sessionData, pokemonData);            
+        }
 
-        await updateSidebar(sessionData, pokemonData);
+        const partyID = (pokemonLocation === "enemyParty" ? "enemies" : "allies");
+        window.activePokemonParties[partyID] = pokemonData;
+        await renderSidebarPartyTemplate(sessionData, partyID);
         await updateBottomPanel(sessionData, pokemonData);
     });
 }
@@ -965,35 +972,35 @@ function extensionSettingsListener() {
     browserApi.storage.onChanged.addListener(async function (changes, namespace) {
         for (const [key, values = {oldValue, newValue}] of Object.entries(changes)) {
             if (key === 'showMinified') {
-                const sessionData = Utils.LocalStorage.getSessionData();
+                const sessionData = window.Utils.LocalStorage.getSessionData();
                 await initCreation(sessionData);
             }
             if (key === 'scaleFactor') {
                 await scaleElements();
             }
             if (key === 'showEnemies') {
-                const sessionData = Utils.LocalStorage.getSessionData();
+                const sessionData = window.Utils.LocalStorage.getSessionData();
                 await initCreation(sessionData);
                 await toggleSidebarPartyDisplay('enemies', values.newValue);
             }
             if (key === 'showParty') {
-                const sessionData = Utils.LocalStorage.getSessionData();
+                const sessionData = window.Utils.LocalStorage.getSessionData();
                 await initCreation(sessionData);
                 await toggleSidebarPartyDisplay('allies', values.newValue);
             }
             if (key === 'showSidebar') {
-                const sessionData = Utils.LocalStorage.getSessionData();
+                const sessionData = window.Utils.LocalStorage.getSessionData();
                 await toggleSidebar(sessionData);
             }
             if (key === 'sidebarPosition') {
-                const sessionData = Utils.LocalStorage.getSessionData();
+                const sessionData = window.Utils.LocalStorage.getSessionData();
                 await changeSidebarPosition(sessionData);
             }
             if (key === 'sidebarScaleFactor') {
                 await scaleSidebarElements();
             }
             if (key === 'sidebarCompactTypes') {
-                const sessionData = Utils.LocalStorage.getSessionData();
+                const sessionData = window.Utils.LocalStorage.getSessionData();
                 await switchSidebarTypesDisplay(values.newValue);
             }            
         }
@@ -1013,15 +1020,19 @@ function listenForDataUiModeChange() {
                         // Existing logic for handling data-ui-mode changes
                         if (newValue === "MESSAGE" || newValue === "COMMAND" || newValue === "CONFIRM") {
                             try {
-                                Utils.LocalStorage.setSessionData();
-                                const sessionData = Utils.LocalStorage.getSessionData();
-                                await initCreation(sessionData);
+                                window.Utils.LocalStorage.setSessionData();
+                                const sessionData = window.Utils.LocalStorage.getSessionData();
+                                if (sessionData && Object.keys(sessionData).length > 0) {
+                                    await initCreation(sessionData);
+                                } else {
+                                    console.log("SessionData empty. 'await initCreation(sessionData)' not called.")
+                                }                      
                             } catch (err) {
                                 console.error(err)
                             }
                         }
                         if (newValue === "SAVE_SLOT") {
-                            Utils.LocalStorage.clearAllSessionData();
+                            window.Utils.LocalStorage.clearAllSessionData();
                         }
                         if (newValue === "SAVE_SLOT" || newValue === "TITLE" || newValue === "MODIFIER_SELECT" || newValue === "STARTER_SELECT") {
                             deleteWrapperDivs()
