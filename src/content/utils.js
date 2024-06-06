@@ -10,6 +10,7 @@ const contentInjectables = [
     "/content/data/pokemonList.js",
     "/content/util_classes/pokemonMapper.util.js",
     "/content/util_classes/localStorage.util.js",
+    "/content/util_classes/pokemonIconDrawer.util.js",
     "/content/util_classes/uiController.util.js"
 ];
 
@@ -18,10 +19,12 @@ class UtilsClass extends EventTarget {  // eslint-disable-line no-unused-vars
         super();
         this.PokeMapper = null;
         this.LocalStorage = null;
+        this.PokemonIconDrawer = null;
         this.classesReady = {
             "pokemonMapper.util.js": false,
             "localStorage.util.js": false,
             "uiController.util.js": false,
+            "pokemonIconDrawer.util.js": false,
         };
         this._isReady = false;
         this.index = 0;
@@ -74,6 +77,9 @@ class UtilsClass extends EventTarget {  // eslint-disable-line no-unused-vars
             } else if (targetScript.includes("/content/util_classes/localStorage.util.js")) {
                 this.classesReady["localStorage.util.js"] = true;
                 this.LocalStorage = new LocalStorageClass();
+            } else if (targetScript.includes("/content/util_classes/pokemonIconDrawer.util.js")) {
+                this.classesReady["pokemonIconDrawer.util.js"] = true;
+                this.PokemonIconDrawer = new PokemonIconDrawer();
             } else if (targetScript.includes("/content/util_classes/uiController.util.js")) {
                 this.classesReady["uiController.util.js"] = true;
                 // this.UiController = new UIController();

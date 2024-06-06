@@ -18,10 +18,9 @@
         return html`
             <div class="roguedex-sidebar hideIVs" id="roguedex-sidebar" data-shown-pokemon-text-info="movesets">        
                 <button id="sidebar-switch-iv-moves" class="tooltip">&#8644; ${window.lit.createTooltipDiv('Switch between showing ally IVs and movesets.')}</button>
-                ${window.lit.updateSidebarHeader(sessionData)}
+                <div class="sidebar-header" id="sidebar-header"></div>                
                 <div class="sidebar-enemies-box visible" id="sidebar-enemies-box"></div>
                 <div class="sidebar-allies-box visible" id="sidebar-allies-box"></div>
-                <!--<button id="go-to-options">&#9881;</button>-->
             </div>
         `;
     };
@@ -37,12 +36,10 @@
         const isTrainerBattle = (trainer != null);
     
         return html`
-            <div class="sidebar-header" id="sidebar-header">
-                <span>RogueDex</span>
-                ${!isTrainerBattle ? '' : html`
-                    <span class=sidebar-header-trainer-battle>(Trainer Battle)</span>
-                `}
-            </div>
+            <span>RogueDex</span>
+            ${!isTrainerBattle ? '' : html`
+                <span class=sidebar-header-trainer-battle>(Trainer Battle)</span>
+            `}
         `;
     };
 

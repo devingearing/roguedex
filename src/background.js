@@ -25,7 +25,6 @@ browserApi.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         return true; // Will respond asynchronously
     } else if (request.action === "showOptions") {
-        // Use browserApi instead of chrome
         browserApi.windows.create({ 
             url: browserApi.runtime.getURL("options/options.html"), 
             type: "popup", 
@@ -34,9 +33,14 @@ browserApi.runtime.onMessage.addListener((request, sender, sendResponse) => {
         });
     } else if (request.action === "fetchImage") {
         fetch(request.url)
-            .then(response => response.blob())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok. Status: ${response.status}`);
+                }
+                return response.blob();
+            })
             .then(blob => {
-                const reader = new window.FileReader();
+                const reader = new FileReader();
                 reader.onloadend = () => {
                     sendResponse({ success: true, dataUrl: reader.result });
                 };
@@ -47,7 +51,7 @@ browserApi.runtime.onMessage.addListener((request, sender, sendResponse) => {
             })
             .catch(error => {
                 console.error('Error fetching image:', error);
-                sendResponse({ success: false, error });
+                sendResponse({ success: false, error: error.message || 'Unknown fetch error' });
             });
 
         return true; // Will respond asynchronously

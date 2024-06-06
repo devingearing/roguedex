@@ -59,6 +59,7 @@
         "content/util_classes/pokemonMapper.util.js",
         "content/util_classes/localStorage.util.js",
 		"content/util_classes/uiController.util.js",
+		"content/util_classes/pokemonIconDrawer.util.js",
 		"content/lit-templates/general.js",
 		"content/lit-templates/bottompanel.js",
 		"content/lit-templates/sidebar.js",

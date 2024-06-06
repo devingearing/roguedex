@@ -7,6 +7,7 @@ const { html, render, ref, unsafeHTML, unsafeSVG, templateContent, asyncAppend, 
 	live, guard, cache, keyed, ifDefined, range, repeat, join, map, choose, when, classMap, styleMap } = window.LitHtml;
 
 const initStates = { panelsInitialized : false };
+//const imageCache = {}
 window.activePokemonParties = { "enemies" : {}, "allies" : {} };
 
 scriptInjector();
@@ -299,7 +300,6 @@ async function changePage(click) {
 async function createPokemonCardDiv(cardId, pokemon) {
     const opacityRangeMin = 10;
     const opacityRangeMax = 100;
-    // getPokemonIcon(pokemon);
     const pokemonImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
     const opacitySlider = createOpacitySliderDiv(cardId, wrapperDivPositions[cardId].opacity, opacityRangeMin, opacityRangeMax);
     const typeEffectivenessHTML = createTypeEffectivenessWrapper(pokemon.typeEffectiveness);
@@ -397,179 +397,6 @@ function ivComparison(pokeIv, dexIv) {
     const returnHTML = `<div class="stat-icon" style="color: ${colorS} !important; opacity: 0.3">${iconA}</div>`
     return returnHTML;
 }
-
-const imageCache = {};
-async function getPokemonIcon(pokemon, divId) {
-    const DISABLE_FUN_FUSION = true;
-    const cacheKey = pokemon.fusionId ? `${pokemon.name}-${pokemon.fusionId}` : pokemon.name;
-    console.time(`getPokemonIcon_${cacheKey}`); // Start the timer
-
-    const canvas = document.getElementById(`pokemon-icon_${divId}`);
-    if (canvas) {
-        const ctx = canvas.getContext('2d');
-        const parent = canvas.parentElement;
-        const image1 = new Image();
-        const image2 = new Image();
-        const fusionImage = new Image();
-
-        const loadImageFromBlobUrl = (image, blobUrl) => {
-            return new Promise((resolve, reject) => {
-                image.onload = () => resolve(image);
-                image.onerror = reject;
-                image.src = blobUrl;
-            });
-        };
-
-        const drawFallbackText = () => {
-            canvas.parentElement.insertAdjacentHTML("beforeend", `<span class="canvas-fallback-text">${pokemon.name}</span>`);            
-        };
-
-        const drawSingleImage = (image) => {
-            const width = image.width;
-            const height = image.height;
-            const parentHeight = parent.clientHeight;
-            const canvasWidth = parentHeight * (width / height);
-
-            canvas.width = canvasWidth;
-            canvas.height = parentHeight;
-
-            ctx.drawImage(image, 0, 0, width, height, 0, 0, canvasWidth, parentHeight);
-        };
-
-        const drawCombinedImages = () => {
-            const width = image1.width;
-            const height = image1.height;
-            const parentHeight = parent.clientHeight;
-            const canvasWidth = parentHeight * (width / height);
-
-            canvas.width = canvasWidth;
-            canvas.height = parentHeight;
-
-            ctx.drawImage(image1, 0, 0, width, height / 2, 0, 0, canvasWidth, parentHeight / 2);
-            ctx.drawImage(image2, 0, height / 2, width, height / 2, 0, parentHeight / 2, canvasWidth, parentHeight / 2);
-        };
-
-        const fetchImageAndCache = (url, cacheKey, image) => {
-            return new Promise((resolve, reject) => {
-                chrome.runtime.sendMessage({
-                    action: "fetchImage",
-                    url: url
-                }, response => {
-                    if (response.success) {
-                        const blobUrl = response.dataUrl;
-                        imageCache[cacheKey] = blobUrl; // Save Blob URL to memory cache
-                        window.Utils.LocalStorage.saveImageToCache(cacheKey, blobUrl); // Save to local storage
-                        loadImageFromBlobUrl(image, blobUrl).then(resolve).catch(reject);
-                    } else {
-                        reject(response.error);
-                    }
-                });
-            });
-        };
-
-        const image1Src = `${pokemon.sprite}`;
-        const image2Src = pokemon.fusionId ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.fusionId}.png` : null;
-
-        const cachedImage = imageCache[cacheKey] || window.Utils.LocalStorage.getImageFromCache(cacheKey);
-
-        const fallbackToSeparateImages = () => {
-            Promise.all([
-                fetchImageAndCache(image1Src, `${pokemon.name}-1`, image1),
-                fetchImageAndCache(image2Src, `${pokemon.name}-2`, image2)
-            ])
-                .then(drawCombinedImages)
-                .then(() => {
-                    // Combine the images into a single canvas and cache it
-                    const combinedCanvas = document.createElement('canvas');
-                    combinedCanvas.width = canvas.width;
-                    combinedCanvas.height = canvas.height;
-                    const combinedCtx = combinedCanvas.getContext('2d');
-                    combinedCtx.drawImage(canvas, 0, 0);
-                    const combinedDataUrl = combinedCanvas.toDataURL();
-
-                    imageCache[cacheKey] = combinedDataUrl; // Save combined image to memory cache
-                    window.Utils.LocalStorage.saveImageToCache(cacheKey, combinedDataUrl); // Save combined image to local storage
-
-                    console.timeEnd(`getPokemonIcon_${cacheKey}`); // End the timer
-                })
-                .catch(error => console.error(error));
-        };
-
-        if (cachedImage) {            
-            console.log('Using cached image');
-
-            const blobUrl = cachedImage;
-            imageCache[cacheKey] = blobUrl; // Save to memory cache if loaded from local storage
-            loadImageFromBlobUrl(image1, blobUrl).then(() => {
-                if (pokemon.fusionId) {
-                    loadImageFromBlobUrl(image2, blobUrl).then(drawCombinedImages).catch(error => console.error(error));
-                } else {
-                    drawSingleImage(image1);
-                }
-                console.timeEnd(`getPokemonIcon_${cacheKey}`); // End the timer
-            }).catch(error => console.error(error));
-        } else {
-            if (pokemon.fusionId) {
-                if (!DISABLE_FUN_FUSION) {
-                    const fusionName = window.Utils.PokeMapper.capitalizeFirstLetter(window.Utils.PokeMapper.I2P[pokemon.fusionId]);
-                    const pokeName = window.Utils.PokeMapper.capitalizeFirstLetter(window.Utils.PokeMapper.I2P[pokemon.id]);
-
-                    chrome.runtime.sendMessage({
-                        action: "fetchFusionImageHtml",
-                        fusionId: fusionName,
-                        pokemonId: pokeName
-                    }, response => {
-                        if (response.success) {
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(response.html, 'text/html');
-                            const figure = doc.querySelector('figure.sprite.sprite-variant-main');
-                            if (figure) {
-                                const img = figure.querySelector('img');
-                                if (img) {
-                                    chrome.runtime.sendMessage({
-                                        action: "fetchImage",
-                                        url: img.src
-                                    }, imageResponse => {
-                                        if (imageResponse.success) {
-                                            const blobUrl = imageResponse.dataUrl;
-                                            imageCache[cacheKey] = blobUrl; // Save Blob URL to memory cache
-                                            window.Utils.LocalStorage.saveImageToCache(cacheKey, blobUrl); // Save to local storage
-                                            loadImageFromBlobUrl(fusionImage, blobUrl)
-                                                .then(() => {
-                                                    drawSingleImage(fusionImage);
-                                                    console.timeEnd(`getPokemonIcon_${cacheKey}`); // End the timer
-                                                })
-                                                .catch(error => console.error(error));
-                                        } else {
-                                            console.error('Failed to fetch fusion image:', imageResponse.error);
-                                            fallbackToSeparateImages();
-                                        }
-                                    });
-                                    return;
-                                }
-                            }
-                        }
-                        fallbackToSeparateImages();
-                    });
-                } else {
-                    fallbackToSeparateImages();
-                }
-            } else {
-                fetchImageAndCache(image1Src, cacheKey, image1)
-                    .then(() => {
-                        drawSingleImage(image1);
-                        console.timeEnd(`getPokemonIcon_${cacheKey}`); // End the timer
-                    })
-                    .catch(error => {
-                        console.error(error);
-                        drawFallbackText();
-                    });
-            }
-        }
-    }
-    console.log(pokemon);
-}
-
 
 async function createPokemonCardDivMinified(cardId, pokemon) {
     const savedData = window.Utils.LocalStorage.getPlayerData();
@@ -674,7 +501,7 @@ async function createCardsDiv(divId, pokemonData, pokemonIndex) {
         `;
         newDiv.insertAdjacentHTML("afterbegin", cardsHTML)
         document.body.append(newDiv);
-        getPokemonIcon(pokemon, divId);
+        window.Utils.PokemonIconDrawer.getPokemonIcon(pokemon, divId);
 
         if (cardObj.slider) {
             document.getElementById(cardObj.slider).addEventListener('input', changeOpacity)
@@ -746,19 +573,14 @@ async function renderSidebarPartyTemplate(sessionData, partyID, maxPokemonForDet
         const partyTemplate = window.lit.createSidebarPartyTemplate(pokeData, partyID, savedData.dexData, sessionData, maxPokemonForDetailedView);
         render(partyTemplate, sidebarPartyElement);
 
-        pokeData.pokemon.forEach((value, i) => {
-            getPokemonIcon(value, `sidebar_${partyID}_${i}`);
-        });
+        for (const [i, value] of pokeData.pokemon.entries()) {
+            await window.Utils.PokemonIconDrawer.getPokemonIcon(value, `sidebar_${partyID}_${i}`);
+        }
     }
-    await updateSidebarHeader((sessionData.trainer != null));
-}
 
-async function updateSidebarHeader(isTrainerBattle) {
-    const sidebarHeaderElement = document.getElementById('sidebar-header');
-    sidebarHeaderElement.innerHTML = `
-        <span>RogueDex</span>
-        ${isTrainerBattle ? '<span class="sidebar-header-trainer-battle">(Trainer Battle)</span>' : ''}
-    `;
+    const headerElement = document.getElementById(`sidebar-header`);
+    const headerTemplate = window.lit.updateSidebarHeader(sessionData);
+    render(headerTemplate, headerElement);
 }
 
 async function sidebarSwitchBetweenIVsAndMoveset() {
@@ -807,9 +629,9 @@ function deleteAllChildren(element) {
 
 function deleteWrapperDivs() {
     try {
-        console.log("DELETE CALLED")
+        // console.log("DELETE CALLED")
         const enemies = document.getElementById("enemies");
-        console.log(enemies);
+        // console.log(enemies);
         deleteAllChildren(enemies);
         const allies = document.getElementById("allies");
         deleteAllChildren(allies);
