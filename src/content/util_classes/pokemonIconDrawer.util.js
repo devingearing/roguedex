@@ -42,7 +42,7 @@ class PokemonIconDrawer {
         const cacheKey = pokemon.fusionId ? `${pokemon.name}-${pokemon.fusionId}` : pokemon.name;
 
         if (!this.timers.has(cacheKey)) {
-            console.time(`getPokemonIcon_${cacheKey}`);
+            // console.time(`getPokemonIcon_${cacheKey}`);
             this.timers.add(cacheKey);
         }
 

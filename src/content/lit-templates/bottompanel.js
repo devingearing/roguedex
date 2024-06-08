@@ -61,7 +61,7 @@
 
         let luckTotal = 0;
         if (pokemonData.partyId === 'allies') {
-            luckTotal = pokemonData.pokemon.reduce((total, pokemon) => total + pokemon.luck, 0);
+            luckTotal = pokemonData.pokemon.reduce((total, pokemon) => total + pokemon.luck + pokemon.fusionLuck, 0);
         }
 
         const weatherHtml = window.lit.createWeatherHtml(pokemonData.weather);
@@ -135,16 +135,6 @@
      * @returns {TemplateResult} - The HTML template for the Pokémon data table.
      */
     window.lit.createPokemonTable = (pokemon) => {
-        /*
-        console.log("create pokemon table")
-        console.log(pokemon);
-
-        pokemon.friendship
-        pokemon.level
-        pokemon.luck
-        pokemon.nature
-        */
-
         const modifiers = {
             leftOvers: window.lit.getModifier(pokemon?.modifiers?.others, 'LEFTOVERS'),
             wideLens: window.lit.getModifier(pokemon?.modifiers?.others, 'WIDE_LENS'),

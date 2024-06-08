@@ -1,8 +1,5 @@
 const contentInjectables = [
-    "/content/maps/PokemonEvolutions.js",
-    "/content/maps/abilityMap.js",
     "/content/maps/natureMap.js",
-    "/content/maps/Pokemon_To_Id.js",
     "/content/maps/weatherMap.js",
     "/content/maps/moveList.js",
     // "/content/data/moveList.js",

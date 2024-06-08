@@ -63,6 +63,7 @@
 		"content/lit-templates/general.js",
 		"content/lit-templates/bottompanel.js",
 		"content/lit-templates/sidebar.js",
+		"content/lit-templates/cards.js",
         "content/content.js"
       ],
       "css": [

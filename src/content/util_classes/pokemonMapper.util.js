@@ -1,28 +1,18 @@
 class PokemonMapperClass{
     constructor() {
-        this.P2I = window.__Species;
-        this.I2P = null;
-        this.EvoMap = window.__EvolutionMap;
-        this.PrevoMap = null;
-        this.W2I = window.__WeatherMap;
-        this.I2W = null;
-        this.A2I = window.__AbilityMap;
-        this.I2A = null;
+        //this.W2I = window.__WeatherMap;
+        //this.I2W = null;
         this.N2I = window.__NatureMap;
         this.I2N = null;
         this.MoveList = window.__moveList;
         this.AbilityList = window.__abilityList;
         this.PokemonList = window.__pokemonList;
-        // this.SpeciesData = window.__SpeciesData;
         PokemonMapperClass.#init(this);
     }
 
     static #init($this) {
-        $this.I2P = PokemonMapperClass.#calculateInverseMap($this.P2I);
-        $this.I2W = PokemonMapperClass.#calculateInverseMap($this.W2I);
-        $this.I2A = PokemonMapperClass.#calculateInverseMap($this.A2I);
+        //$this.I2W = PokemonMapperClass.#calculateInverseMap($this.W2I);
         $this.I2N = PokemonMapperClass.#calculateInverseMap($this.N2I);
-        $this.PrevoMap = PokemonMapperClass.#calcPrevolution($this.EvoMap);
     }
 
     static #calculateInverseMap(map) {
@@ -31,31 +21,6 @@ class PokemonMapperClass{
             returnMap[value] = key;
         }
         return returnMap;
-    }
-
-    static #calcPrevolution(evoMapT) {
-        // let evoMapT = window.__EvolutionMap;
-        const preEvolutions = {};
-        const prevolutionKeys = Object.keys(evoMapT);
-        prevolutionKeys.forEach(pk =>{
-            const evolutions =  evoMapT[pk];
-            if (Array.isArray(evolutions)) {
-                evolutions.forEach(evo => {
-                    preEvolutions[evo.name] = pk;
-                });
-            } else {
-                preEvolutions[evolutions.name] = pk;
-            }
-        });
-        return preEvolutions;
-    }
-
-    findBasePokemon(pokemonName) {
-        let currentName = pokemonName;
-        while (this.PrevoMap[currentName] !== undefined) {
-            currentName = this.PrevoMap[currentName];
-        }
-        return currentName;
     }
 
     static #mapPartyToPokemonArray(party, battleModifiers) {
@@ -142,36 +107,6 @@ class PokemonMapperClass{
         }
     }
     
-    static async #fetchDataWithFallback(primaryUrl, fallbackUrls) {
-        async function fetchJson(url) {
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                console.error(`Failed to fetch data from ${url}:`, error);
-                return null;
-            }
-        }
-    
-        // Try the primary URL first
-        const primaryData = await fetchJson(primaryUrl);
-        if (primaryData) {
-            return primaryData;
-        }
-    
-        // Try each fallback URL in order
-        for (const fallbackUrl of fallbackUrls) {
-            const fallbackData = await fetchJson(fallbackUrl);
-            if (fallbackData) {
-                return fallbackData;
-            }
-        }
-    
-        throw new Error('Failed to fetch data from the primary URL and all fallback URLs');
-    }
-
     static async #getPokemonTypeMoveset(movelist, movesetObj) {
         // https://pokeapi.co/api/v2/move/${id}
         
@@ -434,13 +369,17 @@ class PokemonMapperClass{
                 baseId: $this.PokemonList[speciesId].basePokemonId,
                 sprite: pokemonSprite,
                 fusionId: fusionSpeciesId,
+                fusionPokemon: fusionPokemon,
                 moveset,
                 boss: pokemon.boss,
                 friendship: pokemon.friendship,
                 level: pokemon.level,
                 luck: pokemon.luck,
+                shiny: pokemon.shiny,
+                pokerus: pokemon.pokerus,
                 fusionLuck: pokemon.fusionLuck,
                 modifiers: pokemon.modifiers,
+                currentTypes: (teraType?.length ? teraType : (fusionTypes?.length ? [baseTypes[0], fusionTypes[1]] : baseTypes)),
             };
         });
 
@@ -521,49 +460,6 @@ class PokemonMapperClass{
 
         fragB = `${fragB.slice(0, 1).toLowerCase()}${fragB.slice(1)}`;
         return `${speciesAPrefix || speciesBPrefix}${fragA}${fragB}${speciesBSuffix || speciesASuffix}`;
-    }
-
-    fixVariantPokemonNames_old(I2P, pokemonSpeciesID, formIndex) {
-        /* 
-        convertPokemonId() isn't working for a bunch of pokemon.
-        At least not when trying to get the pokemon identifier/name via '$this.I2P[pokemonSpeciesID]'.
-        For example in the function 'getPokemonArray()'.
-        I2P has the same keys as the conversion list (2019 ... 8901), it doesn't have keys matching the values that are returned by the conversion 
-        list (10091 ... 10272), so the return value is always undefined when any converted ID is used as a I2P key.
-        That would effect variants like galar and alola pokemon.
-        
-        So for anything that needs a pokemon identifier like 'farfetched-galar' or 'farfetched' instead of the 
-        converted ID (number), this is a quick workaround.
-        */
-        if(pokemonSpeciesID) {
-            const pokemonIdentifier = I2P[pokemonSpeciesID];
-            let pokemonForm = '';
-            try {
-                let formsObj = this.SpeciesData[pokemonSpeciesID].forms[formIndex];
-                pokemonForm = formsObj.typeKey ? formsObj.typeKey : formsObj.name.toLowerCase().replace(/( mode)|( forme)/g, "");
-            } catch (error) {
-                // console.error(error)
-            }
-
-            if (pokemonSpeciesID > 2018) {
-                // turns something like GALAR_FARFETCHD into FARFETCHD-GALAR, which is the correct pokemon identifier used by pokeapi          
-                const splits = pokemonIdentifier.split('_');
-                let newIdentifier = '';
-                for (const i in splits) {
-                    if (i > 0) {
-                        newIdentifier += splits[i] + '-';
-                    }
-                }
-
-                newIdentifier += splits[0];
-                return pokemonForm ? (newIdentifier + '-' + pokemonForm) : newIdentifier
-            } else {
-                return pokemonForm ? (pokemonIdentifier + '-' + pokemonForm) : pokemonIdentifier
-            }            
-        }
-        else{
-            return null;
-        }
     }
 
     static #getPokemonId($this, speciesId) {

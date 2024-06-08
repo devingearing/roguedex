@@ -55,13 +55,13 @@
         <div class="${partyID}-party">
             ${pokemonData.pokemon.map((pokemon, counter) => html`
                 <div class="pokemon-entry ${window.lit.getCssClassCondensed(sessionData, maxPokemonForDetailedView)}" id="sidebar_${partyID}_${counter}">
-                    <div class="pokemon-entry-image">
+                    <div class="pokemon-entry-image tooltip">
                         <canvas id="pokemon-icon_sidebar_${partyID}_${counter}" class="pokemon-entry-icon"></canvas>
-                        <div class="sidebar-pokemon-info tooltip" style="position: absolute; ${partyID === 'enemies' ? 'display: none;' : ''}">
-                            <span class="sidebar-pokemon-level">Lvl. ${pokemon.level}</span>
+                        ${window.lit.createPokemonTooltipDiv(pokemon)}
+                        <div class="sidebar-pokemon-info" style="position: absolute; ${partyID === 'enemies' ? 'display: none;' : ''}">
+                            <span class="sidebar-pokemon-level">L ${pokemon.level}</span>
                             <span class="sidebar-pokemon-shiny">${pokemon.shiny ? '☀' : ''}</span>
-                            <span class="sidebar-pokemon-luck">☘ ${pokemon.luck}</span>
-                            ${window.lit.createTooltipDiv(`Pokemons current level: ${pokemon.level}.<br>Is shiny: ${pokemon.shiny ? 'Yes' : 'No'}.<br>Pokemon luck (shiny bonus): ${pokemon.luck}.`)}
+                            <span class="sidebar-pokemon-luck">☘ ${pokemon.luck + pokemon.fusionLuck}</span>
                         </div>
                     </div>
                     <div class="pokemon-type-effectiveness-wrapper compact">
@@ -93,6 +93,21 @@
                     </div>
                 </div>
             `)}
+        </div>
+    `;
+    
+    window.lit.createPokemonTooltipDiv = (pokemon) => html`
+        <div class="text-base tooltiptext">
+            <span>Name: ${pokemon.name}</span></br>
+            ${!pokemon.fusionId ? '' : html`
+                <span>Base: ${window.lit.capitalizeFirstLetter(pokemon.basePokemon)}</span></br>
+                <span>Fusion: ${window.lit.capitalizeFirstLetter(pokemon.fusionPokemon)}</span></br>
+            `}
+            <span>Types: ${pokemon.currentTypes.join(', ')}</span></br>
+            <span>Level: ${pokemon.level}</span></br>
+            <span>Is shiny: ${pokemon.shiny ? 'Yes' : 'No'}</span></br>
+            <span>Pokemon luck (shiny bonus): ${pokemon.luck + pokemon.fusionLuck}</span></br>
+            <span>Friendship EXP: ${pokemon.friendship}</span>
         </div>
     `;
 

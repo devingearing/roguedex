@@ -195,11 +195,15 @@ body.sidebar-Bottom {
     top: 0;
     padding-left: 0.5em;
 }
-.sidebar-pokemon-info.tooltip .tooltiptext {
+.pokemon-entry-image.tooltip .tooltiptext {
     padding: 0.3em 0.4em 0.3em 0.4em;
     font-size: 1.3em;
     text-align: left;
     width: max-content;
+}
+.pokemon-entry-image.tooltip .tooltiptext span {
+    display: contents;
+    text-shadow: none;
 }
 .pokemon-entry:last-child.div {
     border-bottom: none;
@@ -646,7 +650,6 @@ body.sidebar-Bottom {
 }
 
 /* bottom panel end */
-
 
 .allies-team {
     margin: 0 auto;
