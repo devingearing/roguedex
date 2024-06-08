@@ -23,4 +23,19 @@
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
+    /**
+     * Generates HTML for a status bar, showing certain info about the running extension.
+     * 
+     * @param {object} properties 
+     * @returns {TemplateResult} - A lit-html template result representing the HTML markup.
+     */
+    window.lit.updateExtensionStatusElement = (properties) => {
+        return html`            
+            <span class="rd-status-text">${properties.text}</span>
+            ${!properties.sessionState ? html`
+                <span class="rd-status-session">Session data not loaded! UI won't work for now.</span>
+            ` : '' }            
+        `;
+    }
+
 })(window);

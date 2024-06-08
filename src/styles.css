@@ -81,9 +81,6 @@ body.sidebar-Top {
 body.sidebar-Bottom {
     flex-direction: column-reverse;
 }
-.running-status.sidebar-active {
-    display: none;
-}
 #sidebar-switch-iv-moves {
     position: absolute;
     top: 0;
@@ -832,26 +829,41 @@ input[type='range'] {
     display: flex;
 }
 
-.running-status {
-    position: absolute;
-    width: 100%;
-    justify-content: center;
-    text-align: center;
-    color: blue;
-    background-color: #ffffff50;
-}
-
 .hidden-ability {
     color: #f700ff;
 }
 
-.running-status {
+#extension-status {
     position: absolute;
     width: 100%;
     justify-content: center;
     text-align: center;
     color: blue;
     background-color: #ffffff50;
+}
+#extension-status span {
+    padding: 0 0.5em;
+}
+#extension-status .rd-status-text {
+    color: blue;
+}
+#extension-status .rd-status-session {
+    color: rgb(156, 2, 2);
+}
+#extension-status.sidebar-active {
+    background-color: #00000050;
+    display: block;
+    width: fit-content;
+    bottom: 0;
+    z-index: 1;
+    right: 0;
+}
+#extension-status.sidebar-active .rd-status-text {
+    display: none;
+}
+#extension-status.sidebar-active .rd-status-session {
+    text-shadow: none;
+    font-size: 1.5em;
 }
 
 .stat-p {

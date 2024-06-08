@@ -6,7 +6,7 @@
 const { html, render, ref, unsafeHTML, unsafeSVG, templateContent, asyncAppend, asyncReplace, until, 
 	live, guard, cache, keyed, ifDefined, range, repeat, join, map, choose, when, classMap, styleMap } = window.LitHtml;
 
-const initStates = { panelsInitialized : false, cardsInitialized: false, resizeObserverInitialized : false };
+const initStates = { panelsInitialized : false, cardsInitialized: false, resizeObserverInitialized : false, sessionIntialized : false };
 const uiDataGlobals = {}
 uiDataGlobals.activePokemonParties = { "enemies" : {}, "allies" : {} };
 uiDataGlobals.wrapperDivPositions = {
@@ -61,7 +61,7 @@ let Stat;
 
 
 scriptInjector();
-addRunningStatus();
+updateExtensionStatus();
 listenForDataUiModeChange();
 
 function scriptInjector() {
@@ -88,12 +88,19 @@ function initUtilities() {
     });
 }
 
-function addRunningStatus() {
-    const runningStatusDiv = document.createElement('div')
-    runningStatusDiv.textContent = 'RogueDex is running!'
-    runningStatusDiv.classList.add('text-base')
-    runningStatusDiv.classList.add('running-status')
-    document.body.insertBefore(runningStatusDiv, document.body.firstChild);
+function updateExtensionStatus(properties) {
+    let wrapper = document.getElementById('extension-status');
+    if (!wrapper) {  
+        render(html`<div class="text-base running-status" id="extension-status"></div>`, document.body, { renderBefore: document.body.firstChild });
+        wrapper = document.getElementById('extension-status');
+    }
+    // Use an empty string if properties.text is '', a default value if null/undefined, otherwise use the provided value.
+    const text = properties?.text === '' ? '' : (properties?.text ?? 'RogueDex is running!');
+    // Uses 'unknown' when 'properties.sessionState' is null or undefined.
+    const sessionState = properties?.sessionState ?? 'dont-show';
+
+    const extensionStatusHTML = window.lit.updateExtensionStatusElement({ text, sessionState });
+    render(extensionStatusHTML, wrapper)
 }
 
 function enableDragElement(elmnt) {
@@ -176,13 +183,13 @@ async function deletePokemonCardWrappers(id1 = "enemies", id2 = "allies") {
     if (enemiesWrapper) {
         enemiesWrapper.remove();
     } else {
-        console.warn(`Element with id ${id1} not found.`);
+        console.warn(`Tried to delete element with id ${id1}, not found.`);
     }
 
     if (alliesWrapper) {
         alliesWrapper.remove();
     } else {
-        console.warn(`Element with id ${id2} not found.`);
+        console.warn(`Tried to delete element with id ${id2}, not found.`);
     }
 
     initStates.cardsInitialized = false;
@@ -611,17 +618,24 @@ function listenForDataUiModeChange() {
                             try {
                                 window.Utils.LocalStorage.setSessionData();
                                 const sessionData = window.Utils.LocalStorage.getSessionData();
-                                if (sessionData && Object.keys(sessionData).length > 0) {
+                                if (sessionData && Object.keys(sessionData).length > 0) {                                    
                                     await initCreation(sessionData);
+                                    initStates.sessionIntialized = true;
+                                    updateExtensionStatus({sessionState: initStates.sessionIntialized});                                    
                                 } else {
-                                    console.info("SessionData empty. 'await initCreation(sessionData)' not called.");
+                                    console.warn("SessionData empty. 'initCreation(sessionData)' was skipped. UI won't work for the moment.");
+                                    initStates.sessionIntialized = false;
+                                    updateExtensionStatus({sessionState: initStates.sessionIntialized});
                                 }                      
                             } catch (err) {
+                                console.warn("Getting sessionData failed. UI won't work for the moment.");
                                 console.error(err)
                             }
                         }
                         if (newValue === "SAVE_SLOT") {
                             window.Utils.LocalStorage.clearAllSessionData();
+                            initStates.sessionIntialized = false;
+                            updateExtensionStatus({sessionState: initStates.sessionIntialized});
                         }
                         if (newValue === "SAVE_SLOT" || newValue === "TITLE" || newValue === "MODIFIER_SELECT" || newValue === "STARTER_SELECT") {                            
                             deletePokemonCardWrappers();
